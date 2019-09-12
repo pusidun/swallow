@@ -1,0 +1,2 @@
+# swallow
+A c++ library
