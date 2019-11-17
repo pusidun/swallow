@@ -3,16 +3,8 @@
 #include "log.h"
 #include "unistd.h"
 
-#define SWALLOW_LOG_LEVEL(logger, level)                                            \
-    if (logger->getLevel() <= level)                                                   \
-    swallow::LogEventWrapper(                                                       \
-        swallow::LogEvent::ptr(new swallow::LogEvent(                               \
-            logger, level, __FILE__, __LINE__, 0, 456,                              \
-            123, time(0), "thread 0")))                                             \
-        .getSS()
-
-
-int main() {
+int main()
+{
     swallow::Logger::ptr logger(new swallow::Logger);
     swallow::LogFormatter::ptr fmt(new swallow::LogFormatter("%d  %f：%l  %t:%F  %p  %m%n"));
 
@@ -26,7 +18,12 @@ int main() {
     file_appender->setLevel(swallow::LogLevel::DEBUG);
     logger->addAppender(file_appender);
 
-    SWALLOW_LOG_LEVEL(logger, swallow::LogLevel::INFO)<<"log.h test succcess!";
+    SWALLOW_LOG_INFO(logger)<<"log.h test succcess!";
+    SWALLOW_LOG_DEBUG(logger)<<"debug level test";
+    auto l = swallow::LoggerMgr::getInstance()->getLogger("root");
+    SWALLOW_LOG_WARN(l)<<"LoggerMgr test";
+
+    SWALLOW_LOG_FMT_WARN(l,"c style fmt:%s %d", "success", 12345);
 
     return 0;
 }

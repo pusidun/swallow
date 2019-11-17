@@ -1,5 +1,5 @@
 /**
- * @copyright Copyright [2019] 
+ * @copyright Copyright [2019]
  * @author pusidun@hotmail.com
  * @file lock.h
  * @brief log class
@@ -11,9 +11,11 @@
 #include "nocopyable.h"
 #include <iostream>
 
-namespace swallow {
+namespace swallow
+{
 
-class MutexLock: public nocopyable {
+class MutexLock: public nocopyable
+{
  public:
     MutexLock() {
         pthread_mutex_init(&m_mutex, nullptr);
@@ -35,7 +37,8 @@ class MutexLock: public nocopyable {
     pthread_mutex_t m_mutex;
 };
 
-class MutexLockGuard: nocopyable {
+class MutexLockGuard: nocopyable
+{
  public:
     explicit MutexLockGuard(MutexLock& _mutex): m_mutex(_mutex) {
         m_mutex.lock();

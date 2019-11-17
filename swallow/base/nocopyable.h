@@ -1,5 +1,5 @@
 /**
- * @copyright Copyright [2019] 
+ * @copyright Copyright [2019]
  * @author pusidun@hotmail.com
  * @file nocopyable.h
  * @brief class which override this class is nocopyable
@@ -8,9 +8,11 @@
 #ifndef SWALLOW_BASE_NOCOPYABLE_H_
 #define SWALLOW_BASE_NOCOPYABLE_H_
 
-namespace swallow {
+namespace swallow
+{
 
-class nocopyable{
+class nocopyable
+{
  protected:
     nocopyable() = default;
     ~nocopyable() = default;

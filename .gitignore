@@ -37,4 +37,7 @@ CMakeFiles/*
 Makefile
 bin/*
 lib/*
+build/*
 
+#Astyle
+*.orig
