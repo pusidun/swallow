@@ -13,6 +13,7 @@
 #include <iostream>
 #include <cstdio>
 #include "log.h"
+#include <sys/time.h>
 
 namespace swallow
 {
@@ -151,16 +152,68 @@ class CoroutineIdItem: public LogFormatter::FormatItem
 class DataTimeFormatItem: public LogFormatter::FormatItem
 {
  public:
-    DataTimeFormatItem(const std::string& str = "") {}
-    void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
-        struct tm tm;
-        std::string format = "%Y-%m-%d %H:%M:%S";
-        time_t time = event->getTime();
-        localtime_r(&time, &tm);
-        char buf[64];
-        strftime(buf, sizeof(buf), format.c_str(), &tm);
-        os << buf;
+    DataTimeFormatItem(const std::string& str = "") 
+    {
+        struct timeval tv;
+        gettimeofday(&tv, nullptr);
+        _sys_cur_sec = tv.tv_sec;
+        _sys_cur_min = _sys_cur_sec/60;
+        struct tm cur_tm;
+        localtime_r((time_t*)&_sys_cur_sec, &cur_tm);
+        year = cur_tm.tm_year + 1900;
+        month = cur_tm.tm_mon + 1;
+        day = cur_tm.tm_mday;
+        hour = cur_tm.tm_hour;
+        min = cur_tm.tm_min;
+        sec = cur_tm.tm_sec;
+        timeReset();
     }
+
+    void timeReset()
+    {
+        snprintf(buff, sizeof(buff), "%d-%d-%d %02d:%02d:%02d", year, month, day, hour, min, sec);
+    }
+
+    void getCurrentTime()
+    {
+        struct timeval tv;
+        gettimeofday(&tv, nullptr);
+        //not in same second
+        if((uint32_t)tv.tv_sec != _sys_cur_sec)
+        {
+            sec = tv.tv_sec%60;
+            _sys_cur_sec = tv.tv_sec;
+            //not in same miniutes
+            if(_sys_cur_sec/60 != _sys_cur_min)
+            {
+                _sys_cur_min = _sys_cur_sec/60;
+                struct tm cur_tm;
+                localtime_r((time_t*)&_sys_cur_sec, &cur_tm);
+                year = cur_tm.tm_year + 1900;
+                month = cur_tm.tm_mon + 1;
+                day = cur_tm.tm_mday;
+                hour = cur_tm.tm_hour;
+                min = cur_tm.tm_min;
+                timeReset();
+            }
+            else
+            {
+                timeReset();
+            }
+        }
+    }
+
+    void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override 
+    {  
+        //time_t time = event->getTime();
+        getCurrentTime();
+        os << buff;
+    }
+ private:
+    char buff[64];
+    uint64_t _sys_cur_min;
+    uint64_t _sys_cur_sec;
+    int year, month, day, hour, min, sec;
 };
 
 class FilenameFormatItem: public LogFormatter::FormatItem
@@ -214,61 +267,21 @@ void LogFormatter::init()
 {
     static std::map<std::string, std::function<FormatItem::ptr(const std::string&)> >
     mapFormat_items = {
-        {
-            "m", [](const std::string& fmt) {
-                return FormatItem::ptr(new MessageFormatItem(fmt));
-            }
-        },
-        {
-            "r", [](const std::string& fmt) {
-                return FormatItem::ptr(new ElapseFormatItem(fmt));
-            }
-        },
-        {
-            "p", [](const std::string& fmt) {
-                return FormatItem::ptr(new LevelFormatItem(fmt));
-            }
-        },
-        {
-            "c", [](const std::string& fmt) {
-                return FormatItem::ptr(new NameFormatItem(fmt));
-            }
-        },
-        {
-            "t", [](const std::string& fmt) {
-                return FormatItem::ptr(new ThreadIdFormatItem(fmt));
-            }
-        },
-        {
-            "F", [](const std::string& fmt) {
-                return FormatItem::ptr(new CoroutineIdItem(fmt));
-            }
-        },
-        {
-            "d", [](const std::string& fmt) {
-                return FormatItem::ptr(new DataTimeFormatItem(fmt));
-            }
-        },
-        {
-            "f", [](const std::string& fmt) {
-                return FormatItem::ptr(new FilenameFormatItem(fmt));
-            }
-        },
-        {
-            "l", [](const std::string& fmt) {
-                return FormatItem::ptr(new LineFormatItem(fmt));
-            }
-        },
-        {
-            "n", [](const std::string& fmt) {
-                return FormatItem::ptr(new NewLineFormatItem(fmt));
-            }
-        },
-        {
-            "T", [](const std::string& fmt) {
-                return FormatItem::ptr(new TabFormatItem(fmt));
-            }
-        }
+        #define XX(c, _fmt) \
+            {#c, [](const std::string& fmt){return FormatItem::ptr(new _fmt(fmt));} }
+        
+        XX(m, MessageFormatItem),
+        XX(r, ElapseFormatItem),
+        XX(p, LevelFormatItem),
+        XX(c, NameFormatItem),
+        XX(t, ThreadIdFormatItem),
+        XX(F, CoroutineIdItem),
+        XX(d, DataTimeFormatItem),
+        XX(f, FilenameFormatItem),
+        XX(l, LineFormatItem),
+        XX(n, NewLineFormatItem),
+        XX(T, TabFormatItem)
+        #undef XX
     };
 
     //%d%T%t%T%F%T%p%T%c%T%f:%l%T%m%n
@@ -385,7 +398,7 @@ void Logger::log(LogLevel::Level level, LogEvent::ptr event)
         auto self = shared_from_this();
         MutexLockGuard guard(m_mutex);
         if (!m_appenders.empty()) {
-for (auto &i: m_appenders)
+        for (auto &i: m_appenders)
                 i->log(self, level, event);
         } else if (m_root) {
             m_root->log(level, event);

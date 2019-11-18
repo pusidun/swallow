@@ -19,6 +19,7 @@
 #include <string>
 #include <pthread.h>
 #include <sstream>
+#include <time.h>
 #include "lock.h"
 #include "singleton.h"
 
@@ -30,7 +31,7 @@
     swallow::LogEventWrapper(                                                       \
         swallow::LogEvent::ptr(new swallow::LogEvent(                               \
             logger, level, __FILE__, __LINE__, 0, 456,                              \
-            123, time(0), "thread 0")))                                             \
+            123, 0, "thread 0")))                                             \
         .getSS()
 
 #define SWALLOW_LOG_DEBUG(logger) SWALLOW_LOG_LEVEL(logger, swallow::LogLevel::DEBUG)
@@ -47,7 +48,7 @@
     swallow::LogEventWrapper(                                                       \
         swallow::LogEvent::ptr(new swallow::LogEvent(                               \
             logger, level, __FILE__, __LINE__, 0, 456,                              \
-            123, time(0), "thread 0"))).getEvent()->format(fmt, __VA_ARGS__)
+            123, 0, "thread 0"))).getEvent()->format(fmt, __VA_ARGS__)
 
 #define SWALLOW_LOG_FMT_DEBUG(logger,fmt,...) SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::DEBUG, fmt,__VA_ARGS__)
 #define SWALLOW_LOG_FMT_INFO(logger,fmt,...) SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::INFO, fmt,__VA_ARGS__)
@@ -85,6 +86,7 @@ class LogEvent
 
     /**
      * @brief ctor
+     * @param[in] time 日志时间 现在换为gettimeofday方式已无用处
      **/
     LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level
              ,const char* file, int32_t line, uint32_t elapse
@@ -132,7 +134,7 @@ class LogEvent
     uint32_t m_elapse = 0;
     uint32_t m_threadId = 0;
     uint32_t m_coroutineId = 0;
-    uint64_t m_time = 0;
+    uint64_t m_time = 0;  // not used now
     std::string m_threadName;
     std::stringstream m_ss;
     std::shared_ptr<Logger> m_logger;
@@ -158,6 +160,20 @@ class LogFormatter
  public:
     typedef std::shared_ptr<LogFormatter> ptr;
 
+    /**
+     * @brief pattern
+     * m:消息
+     * p:日志级别
+     * r:累计毫秒数
+     * c:日志名称
+     * t:线程id
+     * n:换行
+     * d:时间
+     * f:文件名
+     * l:行号
+     * T:Tab
+     * F:协程id
+     **/
     LogFormatter(const std::string& pattern);
     std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
     std::ostream& format(std::ostream& ofs, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);

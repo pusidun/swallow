@@ -2,11 +2,18 @@
 #include <time.h>
 #include "log.h"
 #include "unistd.h"
+#include <sys/time.h>
+
+int64_t get_current_millis(void) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (int64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
 
 int main()
 {
     swallow::Logger::ptr logger(new swallow::Logger);
-    swallow::LogFormatter::ptr fmt(new swallow::LogFormatter("%d  %f：%l  %t:%F  %p  %m%n"));
+    swallow::LogFormatter::ptr fmt(new swallow::LogFormatter("%f%T%l%T%d%T%p%T%r%T%c%m%n"));
 
     swallow::StdoutLogAppender::ptr stdoutappender(new swallow::StdoutLogAppender);
     stdoutappender->setFormatter(fmt);
@@ -18,12 +25,18 @@ int main()
     file_appender->setLevel(swallow::LogLevel::DEBUG);
     logger->addAppender(file_appender);
 
-    SWALLOW_LOG_INFO(logger)<<"log.h test succcess!";
-    SWALLOW_LOG_DEBUG(logger)<<"debug level test";
+    //performance test
+    uint64_t start_ts = get_current_millis();
+    for(int i=0; i<1e6; ++i)
+        SWALLOW_LOG_ERROR(logger)<<"write something to log.my id is "<<i;
+    uint64_t end_ts = get_current_millis();
+    SWALLOW_LOG_INFO(logger)<<"time use:"<<end_ts-start_ts;
+
+#if 0    
     auto l = swallow::LoggerMgr::getInstance()->getLogger("root");
     SWALLOW_LOG_WARN(l)<<"LoggerMgr test";
 
     SWALLOW_LOG_FMT_WARN(l,"c style fmt:%s %d", "success", 12345);
-
+#endif    
     return 0;
 }
