@@ -18,8 +18,11 @@ After make, shared library will be in ${project}/lib and binary file in ${projec
 
 - log
 
-## Contribute
+## LICENSE
 
-This repo obey MIT LICENSE.
-All code are foramtted by AStyle using command `astyle --style=linux --recursive ./*.cc ./*.h`
+This code is released under MIT.
 
+## Contribute to this repository
+
+Issue reports and code fixes are welcome.
+This repo obeys [Google C++ Style Guide](http://google.github.io/styleguide/cppguide.html).

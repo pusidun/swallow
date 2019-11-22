@@ -8,11 +8,9 @@
 #ifndef SWALLOW_BASE_NOCOPYABLE_H_
 #define SWALLOW_BASE_NOCOPYABLE_H_
 
-namespace swallow
-{
+namespace swallow {
 
-class nocopyable
-{
+class nocopyable {
  protected:
     nocopyable() = default;
     ~nocopyable() = default;

@@ -5,17 +5,15 @@
  * @brief log class
  * @date 2019-11-12
  */
-#ifndef SWALLOW_BASE_LOCK_H
-#define SWALLOW_BASE_LOCK_H
+#ifndef SWALLOW_BASE_LOCK_H_
+#define SWALLOW_BASE_LOCK_H_
 #include <pthread.h>
-#include "nocopyable.h"
 #include <iostream>
+#include "nocopyable.h"
 
-namespace swallow
-{
+namespace swallow {
 
-class MutexLock: public nocopyable
-{
+class MutexLock: public nocopyable {
  public:
     MutexLock() {
         pthread_mutex_init(&m_mutex, nullptr);
@@ -37,8 +35,7 @@ class MutexLock: public nocopyable
     pthread_mutex_t m_mutex;
 };
 
-class MutexLockGuard: nocopyable
-{
+class MutexLockGuard: nocopyable {
  public:
     explicit MutexLockGuard(MutexLock& _mutex): m_mutex(_mutex) {
         m_mutex.lock();
@@ -52,6 +49,6 @@ class MutexLockGuard: nocopyable
     MutexLock& m_mutex;
 };
 
-}  // swallow
+}  // namespace swallow
 
-#endif  // SWALLOW_BASE_LOCK_H
+#endif  // SWALLOW_BASE_LOCK_H_

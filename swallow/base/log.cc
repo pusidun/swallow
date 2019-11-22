@@ -5,22 +5,20 @@
  * @brief log class
  * @date 2019-11-08
  */
-
+#include <sys/time.h>
 #include <map>
 #include <vector>
 #include <ctime>
 #include <functional>
 #include <iostream>
 #include <cstdio>
+#include <utility>
 #include "log.h"
-#include <sys/time.h>
 
-namespace swallow
-{
+namespace swallow {
 
-const char* LogLevel::ToString(LogLevel::Level level)
-{
-    switch(level) {
+const char* LogLevel::ToString(LogLevel::Level level) {
+    switch (level) {
     case LogLevel::DEBUG:
         return "DEBUG";
         break;
@@ -50,20 +48,18 @@ LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level
                    , const char* file, int32_t line, uint32_t elapse
                    , uint32_t thread_id, uint32_t coroutine_id, uint64_t time
                    , const std::string thread_name)
-    :m_logger(logger),m_level(level),m_file(file), m_line(line), m_elapse(elapse),
+    :m_logger(logger), m_level(level), m_file(file), m_line(line), m_elapse(elapse),
  m_threadId(thread_id), m_coroutineId(coroutine_id),
  m_time(time), m_threadName(thread_name) {}
 
-void LogEvent::format(const char* fmt, ...)
-{
+void LogEvent::format(const char* fmt, ...) {
     va_list al;
     va_start(al, fmt);
     format(fmt, al);
     va_end(al);
 }
 
-void LogEvent::format(const char* fmt, va_list al)
-{
+void LogEvent::format(const char* fmt, va_list al) {
     char* buf = nullptr;
     int len = vasprintf(&buf, fmt, al);
     if (len != 1) {
@@ -77,89 +73,78 @@ void LogEvent::format(const char* fmt, va_list al)
  */
 LogEventWrapper::LogEventWrapper(LogEvent::ptr e):m_event(e) {}
 
-LogEventWrapper::~LogEventWrapper()
-{
+LogEventWrapper::~LogEventWrapper() {
     m_event->getLogger()->log(m_event->getLevel(), m_event);
 }
 
-std::stringstream& LogEventWrapper::getSS()
-{
+std::stringstream& LogEventWrapper::getSS() {
     return m_event->getSS();
 }
 
 /**
  * @brief: LogFormatter Impl
  */
-LogFormatter::LogFormatter(const std::string& pattern):m_pattern(pattern)
-{
+LogFormatter::LogFormatter(const std::string& pattern):m_pattern(pattern) {
     init();
 }
 
-class MessageFormatItem : public LogFormatter::FormatItem
-{
+class MessageFormatItem : public LogFormatter::FormatItem {
  public:
-    MessageFormatItem(const std::string& str = "") {}
+    explicit MessageFormatItem(const std::string& str = "") {}
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
         os << event->getContent();
     }
 };
 
-class ElapseFormatItem : public LogFormatter::FormatItem
-{
+class ElapseFormatItem : public LogFormatter::FormatItem {
  public:
-    ElapseFormatItem(const std::string& str = "") {}
+    explicit ElapseFormatItem(const std::string& str = "") {}
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
         os << event->getElapse();
     }
 };
 
-class LevelFormatItem : public LogFormatter::FormatItem
-{
+class LevelFormatItem : public LogFormatter::FormatItem {
  public:
-    LevelFormatItem(const std::string& str = "") {}
+    explicit LevelFormatItem(const std::string& str = "") {}
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
         os << LogLevel::ToString(level);
     }
 };
 
-class NameFormatItem: public LogFormatter::FormatItem
-{
+class NameFormatItem: public LogFormatter::FormatItem {
  public:
-    NameFormatItem(const std::string& str = "") {}
+    explicit NameFormatItem(const std::string& str = "") {}
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
         os << event->getLogger()->getName();
     }
 };
 
-class ThreadIdFormatItem: public LogFormatter::FormatItem
-{
+class ThreadIdFormatItem: public LogFormatter::FormatItem {
  public:
-    ThreadIdFormatItem(const std::string& str = "") {}
+    explicit ThreadIdFormatItem(const std::string& str = "") {}
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
         os << event->getThreadId();
     }
 };
 
-class CoroutineIdItem: public LogFormatter::FormatItem
-{
+class CoroutineIdItem: public LogFormatter::FormatItem {
  public:
-    CoroutineIdItem(const std::string& str = "") {}
+    explicit CoroutineIdItem(const std::string& str = "") {}
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
         os << event->getCoroutineId();
     }
 };
 
-class DataTimeFormatItem: public LogFormatter::FormatItem
-{
+class DataTimeFormatItem: public LogFormatter::FormatItem {
  public:
-    DataTimeFormatItem(const std::string& str = "") 
-    {
+    explicit DataTimeFormatItem(const std::string& str = "") {
         struct timeval tv;
         gettimeofday(&tv, nullptr);
         _sys_cur_sec = tv.tv_sec;
         _sys_cur_min = _sys_cur_sec/60;
         struct tm cur_tm;
-        localtime_r((time_t*)&_sys_cur_sec, &cur_tm);
+        localtime_r(reinterpret_cast<time_t*>(&_sys_cur_sec), &cur_tm);
         year = cur_tm.tm_year + 1900;
         month = cur_tm.tm_mon + 1;
         day = cur_tm.tm_mday;
@@ -169,46 +154,40 @@ class DataTimeFormatItem: public LogFormatter::FormatItem
         timeReset();
     }
 
-    void timeReset()
-    {
+    void timeReset() {
         snprintf(buff, sizeof(buff), "%d-%d-%d %02d:%02d:%02d", year, month, day, hour, min, sec);
     }
 
-    void getCurrentTime()
-    {
+    void getCurrentTime() {
         struct timeval tv;
         gettimeofday(&tv, nullptr);
-        //not in same second
-        if((uint32_t)tv.tv_sec != _sys_cur_sec)
-        {
+        // not in same second
+        if ((uint32_t)tv.tv_sec != _sys_cur_sec) {
             sec = tv.tv_sec%60;
             _sys_cur_sec = tv.tv_sec;
-            //not in same miniutes
-            if(_sys_cur_sec/60 != _sys_cur_min)
-            {
+            // not in same miniutes
+            if (_sys_cur_sec/60 != _sys_cur_min) {
                 _sys_cur_min = _sys_cur_sec/60;
                 struct tm cur_tm;
-                localtime_r((time_t*)&_sys_cur_sec, &cur_tm);
+                localtime_r(reinterpret_cast<time_t*>(&_sys_cur_sec), &cur_tm);
                 year = cur_tm.tm_year + 1900;
                 month = cur_tm.tm_mon + 1;
                 day = cur_tm.tm_mday;
                 hour = cur_tm.tm_hour;
                 min = cur_tm.tm_min;
                 timeReset();
-            }
-            else
-            {
+            } else {
                 timeReset();
             }
         }
     }
 
-    void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override 
-    {  
-        //time_t time = event->getTime();
+    void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
+        // time_t time = event->getTime();
         getCurrentTime();
         os << buff;
     }
+
  private:
     char buff[64];
     uint64_t _sys_cur_min;
@@ -216,37 +195,33 @@ class DataTimeFormatItem: public LogFormatter::FormatItem
     int year, month, day, hour, min, sec;
 };
 
-class FilenameFormatItem: public LogFormatter::FormatItem
-{
+class FilenameFormatItem: public LogFormatter::FormatItem {
  public:
-    FilenameFormatItem(const std::string& str = "") {}
+    explicit FilenameFormatItem(const std::string& str = "") {}
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
         os << event->getFile();
     }
 };
 
-class LineFormatItem: public LogFormatter::FormatItem
-{
+class LineFormatItem: public LogFormatter::FormatItem {
  public:
-    LineFormatItem(const std::string& str = "") {}
+    explicit LineFormatItem(const std::string& str = "") {}
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
         os << event->getLine();
     }
 };
 
-class NewLineFormatItem: public LogFormatter::FormatItem
-{
+class NewLineFormatItem: public LogFormatter::FormatItem {
  public:
-    NewLineFormatItem(const std::string& str = "") {}
+    explicit NewLineFormatItem(const std::string& str = "") {}
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
         os << std::endl;
     }
 };
 
-class StringFormatItem: public LogFormatter::FormatItem
-{
+class StringFormatItem: public LogFormatter::FormatItem {
  public:
-    StringFormatItem(const std::string& str = ""):m_str(str) {}
+    explicit StringFormatItem(const std::string& str = ""):m_str(str) {}
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
         os << m_str;
     }
@@ -254,22 +229,20 @@ class StringFormatItem: public LogFormatter::FormatItem
     std::string m_str;
 };
 
-class TabFormatItem: public LogFormatter::FormatItem
-{
+class TabFormatItem: public LogFormatter::FormatItem {
  public:
-    TabFormatItem(const std::string& str = "") {}
+    explicit TabFormatItem(const std::string& str = "") {}
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
         os << "\t";
     }
 };
 
-void LogFormatter::init()
-{
+void LogFormatter::init() {
     static std::map<std::string, std::function<FormatItem::ptr(const std::string&)> >
     mapFormat_items = {
         #define XX(c, _fmt) \
-            {#c, [](const std::string& fmt){return FormatItem::ptr(new _fmt(fmt));} }
-        
+            {#c, [](const std::string& fmt) {return FormatItem::ptr(new _fmt(fmt));} }
+
         XX(m, MessageFormatItem),
         XX(r, ElapseFormatItem),
         XX(p, LevelFormatItem),
@@ -284,10 +257,10 @@ void LogFormatter::init()
         #undef XX
     };
 
-    //%d%T%t%T%F%T%p%T%c%T%f:%l%T%m%n
+    // %d%T%t%T%F%T%p%T%c%T%f:%l%T%m%n
     std::vector<std::pair<int, char>> vecItem;
-    for(size_t idx=0; idx < m_pattern.size(); idx++) {
-        if(m_pattern[idx] == '%') {
+    for (size_t idx = 0; idx < m_pattern.size(); idx++) {
+        if (m_pattern[idx] == '%') {
             vecItem.push_back(std::make_pair(0, m_pattern[idx+1]));
             ++idx;
         } else {
@@ -295,14 +268,14 @@ void LogFormatter::init()
         }
     }
 
-for(auto &i: vecItem) {
+    for (auto &i : vecItem) {
         int type = i.first;
         std::string item(1, i.second);
-        if(type == 1) {
+        if (type == 1) {
             m_items.push_back(FormatItem::ptr(new StringFormatItem(item)));
         } else {
             auto it = mapFormat_items.find(item);
-            if( it != mapFormat_items.end() )
+            if (it != mapFormat_items.end() )
                 m_items.push_back(it->second(item));
             else
                 m_items.push_back(FormatItem::ptr(new StringFormatItem(item)));
@@ -311,8 +284,7 @@ for(auto &i: vecItem) {
 }
 
 std::string LogFormatter::format(std::shared_ptr<Logger> logger,
-                                 LogLevel::Level level, LogEvent::ptr event)
-{
+                                 LogLevel::Level level, LogEvent::ptr event) {
     std::stringstream ss;
 for (auto &i : m_items) {
         i->format(ss, logger, level, event);
@@ -323,44 +295,38 @@ for (auto &i : m_items) {
 /**
  * @brief LogAppender impl
  */
-void LogAppender::setFormatter(LogFormatter::ptr val)
-{
+void LogAppender::setFormatter(LogFormatter::ptr val) {
     MutexLockGuard guard(m_mutex);
     m_formatter = val;
 
-    if(m_formatter)
+    if (m_formatter)
         m_hasFormatter = true;
     else
         m_hasFormatter = false;
 }
 
-LogFormatter::ptr LogAppender::getFormatter()
-{
+LogFormatter::ptr LogAppender::getFormatter() {
     MutexLockGuard guard(m_mutex);
     return m_formatter;
 }
 
 void StdoutLogAppender::log(Logger::ptr logger, LogLevel::Level level,
-                            LogEvent::ptr event)
-{
+                            LogEvent::ptr event) {
     if (level >= LogAppender::m_level) {
         std::cout << LogAppender::m_formatter->format(logger, level, event);
     }
 }
 
 FileLogAppender::FileLogAppender(const std::string &filename)
-    : m_filename(filename)
-{
+    : m_filename(filename) {
     reopen();
 }
 
 void FileLogAppender::log(Logger::ptr logger, LogLevel::Level level,
-                          LogEvent::ptr event)
-{
-
+                          LogEvent::ptr event) {
     if (level >= LogAppender::m_level) {
         uint64_t now = time(0);
-        //每一秒重新打开一次文件，保证在日志文件被删除的情况下可以重新创建文件
+        // 每一秒重新打开一次文件，保证在日志文件被删除的情况下可以重新创建文件
         if (now != m_lastTime) {
             reopen();
             m_lastTime = now;
@@ -370,8 +336,7 @@ void FileLogAppender::log(Logger::ptr logger, LogLevel::Level level,
     }
 }
 
-bool FileLogAppender::reopen()
-{
+bool FileLogAppender::reopen() {
     MutexLockGuard guard(m_mutex);
     if (m_filestream) {
         m_filestream.close();
@@ -386,19 +351,17 @@ bool FileLogAppender::reopen()
  */
 Logger::Logger(const std::string &name)
     : m_name(name)
-, m_level(LogLevel::DEBUG)
-{
+, m_level(LogLevel::DEBUG) {
     m_formatter.reset(
         new LogFormatter("%d%T%t%T%F%T%p%T%c%T%f:%l%T%m%n"));
 }
 
-void Logger::log(LogLevel::Level level, LogEvent::ptr event)
-{
+void Logger::log(LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         auto self = shared_from_this();
         MutexLockGuard guard(m_mutex);
         if (!m_appenders.empty()) {
-        for (auto &i: m_appenders)
+        for (auto &i : m_appenders)
                 i->log(self, level, event);
         } else if (m_root) {
             m_root->log(level, event);
@@ -406,33 +369,27 @@ void Logger::log(LogLevel::Level level, LogEvent::ptr event)
     }
 }
 
-void Logger::debug(swallow::LogEvent::ptr event)
-{
+void Logger::debug(swallow::LogEvent::ptr event) {
     log(LogLevel::DEBUG, event);
 }
 
-void Logger::info(swallow::LogEvent::ptr event)
-{
+void Logger::info(swallow::LogEvent::ptr event) {
     log(LogLevel::INFO, event);
 }
 
-void Logger::warn(swallow::LogEvent::ptr event)
-{
+void Logger::warn(swallow::LogEvent::ptr event) {
     log(LogLevel::WARN, event);
 }
 
-void Logger::error(swallow::LogEvent::ptr event)
-{
+void Logger::error(swallow::LogEvent::ptr event) {
     log(LogLevel::ERROR, event);
 }
 
-void Logger::fatal(swallow::LogEvent::ptr event)
-{
+void Logger::fatal(swallow::LogEvent::ptr event) {
     log(LogLevel::FATAL, event);
 }
 
-void Logger::addAppender(LogAppender::ptr appender)
-{
+void Logger::addAppender(LogAppender::ptr appender) {
     MutexLockGuard guard(m_mutex);
     if (!appender->getFormatter()) {
         appender->setFormatter(m_formatter);
@@ -440,8 +397,7 @@ void Logger::addAppender(LogAppender::ptr appender)
     m_appenders.push_back(appender);
 }
 
-void Logger::delAppender(LogAppender::ptr appender)
-{
+void Logger::delAppender(LogAppender::ptr appender) {
     MutexLockGuard guard(m_mutex);
     for (auto itr = m_appenders.begin(); itr != m_appenders.end(); ++itr) {
         if (*itr == appender) {
@@ -450,26 +406,23 @@ void Logger::delAppender(LogAppender::ptr appender)
     }
 }
 
-void Logger::clearAppender()
-{
+void Logger::clearAppender() {
     MutexLockGuard guard(m_mutex);
     m_appenders.clear();
 }
 
-void Logger::setFormatter(LogFormatter::ptr val)
-{
+void Logger::setFormatter(LogFormatter::ptr val) {
     MutexLockGuard guard(m_mutex);
     m_formatter = val;
 
-for(auto& i: m_appenders) {
+for(auto& i : m_appenders) {
         MutexLockGuard iguard(i->m_mutex);
-        if(!i->m_hasFormatter)
+        if (!i->m_hasFormatter)
             i->m_formatter = m_formatter;
     }
 }
 
-void Logger::setFormatter(const std::string& val)
-{
+void Logger::setFormatter(const std::string& val) {
     LogFormatter::ptr fmt(new LogFormatter(val));
     if (fmt->isError()) {
         return;
@@ -477,32 +430,27 @@ void Logger::setFormatter(const std::string& val)
     setFormatter(fmt);
 }
 
-LogFormatter::ptr Logger::getFormatter()
-{
+LogFormatter::ptr Logger::getFormatter() {
     MutexLockGuard guard(m_mutex);
     return m_formatter;
 }
 
-const std::string Logger::getName() const
-{
+const std::string Logger::getName() const {
     return m_name;
 }
 
-void Logger::setLevel(LogLevel::Level level)
-{
+void Logger::setLevel(LogLevel::Level level) {
     m_level = level;
 }
 
-LogLevel::Level Logger::getLevel() const
-{
+LogLevel::Level Logger::getLevel() const {
     return m_level;
 }
 
-Logger::ptr LoggerManager::getLogger(const std::string& name)
-{
+Logger::ptr LoggerManager::getLogger(const std::string& name) {
     MutexLockGuard guard(m_mutex);
     auto it = m_loggers.find(name);
-    if(it != m_loggers.end()) {
+    if (it != m_loggers.end()) {
         return it->second;
     }
 

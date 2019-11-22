@@ -8,6 +8,9 @@
 #ifndef SWALLOW_BASE_LOG_H_
 #define SWALLOW_BASE_LOG_H_
 
+#include <pthread.h>
+#include <time.h>
+#include <sstream>
 #include <cstdarg>
 #include <cstdint>
 #include <fstream>
@@ -17,21 +20,18 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <pthread.h>
-#include <sstream>
-#include <time.h>
 #include "lock.h"
 #include "singleton.h"
 
 /**
  * @brief log stream macros
  **/
-#define SWALLOW_LOG_LEVEL(logger, level)                                            \
-    if (logger->getLevel() <= level)                                                \
-    swallow::LogEventWrapper(                                                       \
-        swallow::LogEvent::ptr(new swallow::LogEvent(                               \
-            logger, level, __FILE__, __LINE__, 0, 456,                              \
-            123, 0, "thread 0")))                                             \
+#define SWALLOW_LOG_LEVEL(logger, level)                \
+    if (logger->getLevel() <= level)                    \
+    swallow::LogEventWrapper(                           \
+        swallow::LogEvent::ptr(new swallow::LogEvent(   \
+            logger, level, __FILE__, __LINE__, 0, 456,  \
+            123, 0, "thread 0")))                       \
         .getSS()
 
 #define SWALLOW_LOG_DEBUG(logger) SWALLOW_LOG_LEVEL(logger, swallow::LogLevel::DEBUG)
@@ -50,19 +50,25 @@
             logger, level, __FILE__, __LINE__, 0, 456,                              \
             123, 0, "thread 0"))).getEvent()->format(fmt, __VA_ARGS__)
 
-#define SWALLOW_LOG_FMT_DEBUG(logger,fmt,...) SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::DEBUG, fmt,__VA_ARGS__)
-#define SWALLOW_LOG_FMT_INFO(logger,fmt,...) SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::INFO, fmt,__VA_ARGS__)
-#define SWALLOW_LOG_FMT_WARN(logger,fmt,...) SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::WARN, fmt,__VA_ARGS__)
-#define SWALLOW_LOG_FMT_ERROR(logger,fmt,...) SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::ERROR, fmt,__VA_ARGS__)
-#define SWALLOW_LOG_FMT_FATAL(logger,fmt,...) SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::FATAL, fmt,__VA_ARGS__)
+#define SWALLOW_LOG_FMT_DEBUG(logger, fmt, ...) \
+        SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::DEBUG, fmt, __VA_ARGS__)
+#define SWALLOW_LOG_FMT_INFO(logger, fmt, ...) \
+        SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::INFO, fmt, __VA_ARGS__)
+#define SWALLOW_LOG_FMT_WARN(logger, fmt, ...) \
+        SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::WARN, fmt, __VA_ARGS__)
+#define SWALLOW_LOG_FMT_ERROR(logger, fmt, ...) \
+        SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::ERROR, fmt, __VA_ARGS__)
+#define SWALLOW_LOG_FMT_FATAL(logger, fmt, ...) \
+        SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::FATAL, fmt, __VA_ARGS__)
 
-namespace swallow
-{
+#define SWALLOW_LOG_ROOT() swallow::LoggerMgr::getInstance()->getRoot()
+#define SWALLOW_LOG_GET(logname) swallow::LoggerManager::getInstance()->getLogger(logname)
+
+namespace swallow {
 
 class Logger;
 
-class LogLevel
-{
+class LogLevel {
  public:
     /**
     * @brief loglevel
@@ -79,8 +85,7 @@ class LogLevel
     static const char* ToString(LogLevel::Level level);
 };
 
-class LogEvent
-{
+class LogEvent {
  public:
     typedef std::shared_ptr<LogEvent> ptr;
 
@@ -89,9 +94,9 @@ class LogEvent
      * @param[in] time 日志时间 现在换为gettimeofday方式已无用处
      **/
     LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level
-             ,const char* file, int32_t line, uint32_t elapse
-             ,uint32_t thread_id, uint32_t coroutine_id, uint64_t time
-             ,const std::string thread_name);
+             , const char* file, int32_t line, uint32_t elapse
+             , uint32_t thread_id, uint32_t coroutine_id, uint64_t time
+             , const std::string thread_name);
 
     const char* getFile() const {
         return m_file;
@@ -128,6 +133,7 @@ class LogEvent
     }
     void format(const char* fmt, ...);
     void format(const char* fmt, va_list al);
+
  private:
     const char* m_file = nullptr;
     int32_t m_line = 0;
@@ -141,10 +147,9 @@ class LogEvent
     LogLevel::Level m_level;
 };
 
-class LogEventWrapper
-{
+class LogEventWrapper {
  public:
-    LogEventWrapper(LogEvent::ptr e);
+    explicit LogEventWrapper(LogEvent::ptr e);
     ~LogEventWrapper();
     LogEvent::ptr getEvent() const {
         return m_event;
@@ -155,8 +160,7 @@ class LogEventWrapper
     LogEvent::ptr m_event;
 };
 
-class LogFormatter
-{
+class LogFormatter {
  public:
     typedef std::shared_ptr<LogFormatter> ptr;
 
@@ -174,13 +178,14 @@ class LogFormatter
      * T:Tab
      * F:协程id
      **/
-    LogFormatter(const std::string& pattern);
-    std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
-    std::ostream& format(std::ostream& ofs, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
+    explicit LogFormatter(const std::string& pattern);
+    std::string format(std::shared_ptr<Logger> logger, \
+                        LogLevel::Level level, LogEvent::ptr event);
+    std::ostream& format(std::ostream& ofs, std::shared_ptr<Logger> logger, \
+                        LogLevel::Level level, LogEvent::ptr event);
 
  public:
-    class FormatItem
-{
+    class FormatItem {
      public:
         typedef std::shared_ptr<FormatItem> ptr;
 
@@ -195,14 +200,14 @@ class LogFormatter
     const std::string getPattern() const {
         return m_pattern;
     }
+
  private:
     std::string m_pattern;
     std::vector<FormatItem::ptr> m_items;
-    bool m_error = false;  // TODO
+    bool m_error = false;  // TODO(pusidun): format error.
 };
 
-class LogAppender
-{
+class LogAppender {
  public:
     typedef std::shared_ptr<LogAppender> ptr;
     friend class Logger;
@@ -225,18 +230,16 @@ class LogAppender
     LogFormatter::ptr m_formatter;
 };
 
-class StdoutLogAppender: public LogAppender
-{
+class StdoutLogAppender: public LogAppender {
  public:
     typedef std::shared_ptr<StdoutLogAppender> ptr;
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) override;
 };
 
-class FileLogAppender: public LogAppender
-{
+class FileLogAppender: public LogAppender {
  public:
     typedef std::shared_ptr<FileLogAppender> ptr;
-    FileLogAppender(const std::string &filename);
+    explicit FileLogAppender(const std::string &filename);
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) override;
     bool reopen();
  private:
@@ -246,8 +249,7 @@ class FileLogAppender: public LogAppender
     uint64_t m_lastTime = 0;
 };
 
-class Logger: public std::enable_shared_from_this<Logger>
-{
+class Logger: public std::enable_shared_from_this<Logger> {
     friend class LoggerManager;
  public:
     typedef std::shared_ptr<Logger> ptr;
@@ -256,7 +258,7 @@ class Logger: public std::enable_shared_from_this<Logger>
     * @brief ctor
     * @param[in] name logger name
     */
-    Logger(const std::string& name = "root");
+    explicit Logger(const std::string& name = "root");
 
     /**
     * @brief write log
@@ -289,8 +291,7 @@ class Logger: public std::enable_shared_from_this<Logger>
     Logger::ptr m_root;
 };
 
-class LoggerManager
-{
+class LoggerManager {
  public:
     LoggerManager() {
         m_root.reset(new Logger);
@@ -298,7 +299,7 @@ class LoggerManager
         m_loggers[m_root->m_name] = m_root;
     }
     Logger::ptr getLogger(const std::string& name);
-    //void init();
+    // void init();
     Logger::ptr getRoot() const {
         return m_root;
     }

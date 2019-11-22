@@ -8,12 +8,10 @@
 #ifndef SWALLOW_BASE_SINGLETON_H_
 #define SWALLOW_BASE_SINGLETON_H_
 
-namespace swallow
-{
+namespace swallow {
 
 template<typename T>
-class Singleton
-{
+class Singleton {
  public:
     static T* getInstance() {
         static T v;
