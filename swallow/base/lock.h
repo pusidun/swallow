@@ -35,6 +35,32 @@ class MutexLock: public nocopyable {
     pthread_mutex_t m_mutex;
 };
 
+class RWLock: public nocopyable {
+ public:
+    RWLock() {
+        pthread_rwlock_init(&m_rwlock, nullptr);
+    }
+
+    ~RWLock() {
+        pthread_rwlock_destroy(&m_rwlock);
+    }
+
+    void rdlock() {
+        pthread_rwlock_rdlock(&m_rwlock);
+    }
+
+    void wrlock() {
+        pthread_rwlock_wrlock(&m_rwlock);
+    }
+
+    void unlock() {
+        pthread_rwlock_unlock(&m_rwlock);
+    }
+
+ private:
+    pthread_rwlock_t m_rwlock;
+};
+
 class MutexLockGuard: nocopyable {
  public:
     explicit MutexLockGuard(MutexLock& _mutex): m_mutex(_mutex) {

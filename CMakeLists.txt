@@ -9,11 +9,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_subdirectory(swallow/base)
 
-add_executable(logtest examples/log_example.cc)
-target_link_libraries(logtest PUBLIC swallow)
-target_include_directories(logtest PUBLIC
-                           "${PROJECT_BINARY_DIR}"
-						   "${PROJECT_SOURCE_DIR}/swallow/base"
-                           )
+include_directories("${PROJECT_SOURCE_DIR}/swallow/base")
+link_directories("${PROJECT_SOURCE_DIR}/lib")
+
+# 日志类测试
+add_executable(log_example examples/log_example.cc)
+target_link_libraries(log_example swallow)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)

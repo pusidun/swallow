@@ -62,7 +62,7 @@
         SWALLOW_LOG_FMT_LEVEL(logger, swallow::LogLevel::FATAL, fmt, __VA_ARGS__)
 
 #define SWALLOW_LOG_ROOT() swallow::LoggerMgr::getInstance()->getRoot()
-#define SWALLOW_LOG_GET(logname) swallow::LoggerManager::getInstance()->getLogger(logname)
+#define SWALLOW_LOG_GET(logname) swallow::LoggerMgr::getInstance()->getLogger(logname)
 
 namespace swallow {
 
