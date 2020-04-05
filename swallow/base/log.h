@@ -135,6 +135,8 @@ class LogEvent {
     void format(const char* fmt, va_list al);
 
  private:
+    std::shared_ptr<Logger> m_logger;
+    LogLevel::Level m_level = swallow::LogLevel::UNKNOW;
     const char* m_file = nullptr;
     int32_t m_line = 0;
     uint32_t m_elapse = 0;
@@ -143,8 +145,6 @@ class LogEvent {
     uint64_t m_time = 0;  // not used now
     std::string m_threadName;
     std::stringstream m_ss;
-    std::shared_ptr<Logger> m_logger;
-    LogLevel::Level m_level;
 };
 
 class LogEventWrapper {

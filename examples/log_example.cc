@@ -14,7 +14,7 @@ int64_t get_current_millis(void) {
 int main() {
     swallow::Logger::ptr logger(new swallow::Logger);
     swallow::LogFormatter::ptr fmt(new swallow::LogFormatter("%f%T%l%T%d%T%p%T%r%T%c%m%n"));
-
+    
     swallow::StdoutLogAppender::ptr stdoutappender(new swallow::StdoutLogAppender);
     stdoutappender->setFormatter(fmt);
     stdoutappender->setLevel(swallow::LogLevel::DEBUG);
@@ -25,19 +25,11 @@ int main() {
     file_appender->setLevel(swallow::LogLevel::DEBUG);
     logger->addAppender(file_appender);
 
-    // performance test
-    /*
-    uint64_t start_ts = get_current_millis();
-    for (int i = 0; i < 1e6; ++i)
-        SWALLOW_LOG_ERROR(logger) << "write something to log.my id is " << i;
-    uint64_t end_ts = get_current_millis();
-    SWALLOW_LOG_INFO(logger) << "time use:" << end_ts-start_ts;
-    */
+    SWALLOW_LOG_INFO(logger) << "TEST stdout and file output logs";
 
-    auto l = SWALLOW_LOG_ROOT();
-    SWALLOW_LOG_WARN(l)<<"LoggerMgr test";
-
-    SWALLOW_LOG_FMT_WARN(l,"c style fmt:%s %d", "success", 12345);
+    auto root_log = SWALLOW_LOG_ROOT();
+    SWALLOW_LOG_WARN(root_log)<<"root log test, micros test.";
+    SWALLOW_LOG_FMT_WARN(root_log,"c style fmt:%s %d", "success", 0);
 
     return 0;
 }

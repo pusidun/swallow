@@ -13,7 +13,7 @@
 
 namespace swallow {
 
-class MutexLock: public nocopyable {
+class MutexLock {
  public:
     MutexLock() {
         pthread_mutex_init(&m_mutex, nullptr);
@@ -35,7 +35,7 @@ class MutexLock: public nocopyable {
     pthread_mutex_t m_mutex;
 };
 
-class RWLock: public nocopyable {
+class RWLock {
  public:
     RWLock() {
         pthread_rwlock_init(&m_rwlock, nullptr);
@@ -59,6 +59,36 @@ class RWLock: public nocopyable {
 
  private:
     pthread_rwlock_t m_rwlock;
+};
+
+template<typename T>
+class RdLockGuard {
+ public:
+    explicit RdLockGuard(T& _rdlock): m_rdlock(_rdlock){ 
+        m_rdlock.rdlock();
+    }
+
+    ~RdLockGuard() {
+        m_rdlock.unlock();
+    }
+
+ private:
+    T m_rdlock;
+};
+
+template<typename T>
+class WrLockGuard {
+ public:
+    explicit WrLockGuard(T& _wrlock): m_wrlock(_wrlock){ 
+        m_wrlock.wrlock();
+    }
+
+    ~WrLockGuard() {
+        m_wrlock.unlock();
+    }
+    
+ private:
+    T m_wrlock;
 };
 
 class MutexLockGuard: nocopyable {

@@ -1,7 +1,7 @@
 /**
  * @copyright Copyright [2019]
  * @author pusidun@hotmail.com
- * @file log.h
+ * @file log.cc
  * @brief log class
  * @date 2019-11-08
  */
