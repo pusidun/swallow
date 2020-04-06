@@ -12,7 +12,13 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include "boost/lexical_cast.hpp"
+#include <functional>
+#include <iostream>
+#include <boost/lexical_cast.hpp>
+// #include <boost/property_tree/ptree.hpp>
+// #include <boost/property_tree/json_parser.hpp>
+// #include <boost/date_time.hpp>
+// #include <boost/foreach.hpp>
 #include "lock.h"
 #include "nocopyable.h"
 
@@ -43,44 +49,91 @@ class ConfigureBase : public nocopyable {
 */
 template<typename T, typename U>
 class ConfCast {
+ public:
     T operator()(const U& param) { return boost::lexical_cast<T>(param); }
 };
 
-// TODO
-template<typename ItemType>
-class ConfCast<std::string, std::vector<ItemType>> {
-    std::vector<ItemType> operator()(std::string str) {
-
-    }
-};
+/*
+* @brief [TODO]vector转成json格式string
+*/
+// template<typename ItemType>
+// class ConfCast<std::string, std::vector<ItemType>> {
+//     std::string operator()(std::vector<ItemType>& vec) {    
+//     }
+// };
 
 template<typename T>
 class Configure:  public ConfigureBase {
  public:
-    typedef std::shared_ptr<Configure> ptr;
+    typedef  std::shared_ptr<Configure> ptr;
+    typedef  ConfCast<std::string, T>   toStr;
+    typedef  ConfCast<T, std::string>   fromStr;
 
     Configure(const std::string& n, const std::string& d, const T& v):
         ConfigureBase(n, d), value(v) {}
 
+    ~Configure() = default;
+
+    /*
+    * @brief 获取值
+    */
     T getValue() { return value; }
 
-    ~Configure() = default;
+    /*
+    * @brief 设置值
+    */
     void setValue(T v) {
+        RdLockGuard<RWLock> guard(lck_cbs);
+        for(auto i = m_cbs.begin(); i != m_cbs.end(); ++i)
+            (*i)(value, v);
         value = v;
     }
 
+    /*
+    * @brief 序列化配置
+    */
     std::string toString() override {
-        return "";
+        return toStr()(value);
     }
 
+    /*
+    * @brief 反序列化配置
+    */
     bool fromString(std::string s) override {
+        value = fromStr()(s);
         return true;
+    }
+
+    // 配置变化相关的回调函数
+    typedef std::function<void(const T& old_value, const T& new_value)> cb;
+
+    void addWatcher(cb _cb) {
+        WrLockGuard<RWLock> guard(lck_cbs);
+        m_cbs.push_back(_cb);
+    }
+
+    bool delWatcher(cb _cb) {
+        WrLockGuard<RWLock> guard(lck_cbs);
+        auto it = m_cbs.find(_cb);
+        if(it == m_cbs.end()) return false;
+        m_cbs.erase(it);
+        return true;
+    }
+
+    void clearWatcher() {
+        WrLockGuard<RWLock> guard(lck_cbs);
+        m_cbs.clear();
     }
 
  private:
     T value;
+    std::list<cb> m_cbs;
+    RWLock lck_cbs;
 };
 
+/*
+* @brief 配置管理类，用于对所有配置进行查找，添加，删除
+*/
 class ConfigureManager {
  public:
     typedef RdLockGuard<RWLock> RdLockGuardImp;
@@ -97,7 +150,7 @@ class ConfigureManager {
     }
 
     /*
-    ** @brief 如没有配置，添加配置
+    *  @brief 如没有配置，添加配置
     */
     template<typename T>
     static typename Configure<T>::ptr lookUp(const std::string& name,
@@ -110,6 +163,11 @@ class ConfigureManager {
         configs[name] = p;
         return p;
     }
+
+    /*
+    ** @brief 从JSON文件读取配置
+    */
+    bool LoadFromJson(std::string filename);
 
  private:
     static Map2Configer configs;

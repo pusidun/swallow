@@ -4,6 +4,10 @@
 
 A c++ library
 
+## Dependencies
+
+boost
+
 ## Build
 
 ```
@@ -17,6 +21,7 @@ After make, shared library will be in ${project}/lib and binary file in ${projec
 ## Module
 
 - log
+- config
 
 ## LICENSE
 
