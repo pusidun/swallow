@@ -23,7 +23,11 @@ add_executable(log_example examples/log_example.cc)
 target_link_libraries(log_example ${LIBS})
 
 # 配置测试类
-add_executable(config_example examples/config_example.cc)
-target_link_libraries(config_example ${LIBS})
+#add_executable(config_example examples/config_example.cc)
+#target_link_libraries(config_example ${LIBS})
+
+# 协程测试类
+add_executable(coroutine_example examples/coroutine_example.cc)
+target_link_libraries(coroutine_example ${LIBS})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
