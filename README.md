@@ -22,6 +22,7 @@ After make, shared library will be in ${project}/lib and binary file in ${projec
 
 - log
 - config
+- coroutine
 
 ## LICENSE
 

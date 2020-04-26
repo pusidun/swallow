@@ -10,13 +10,13 @@
 
 namespace swallow {
 
-template<typename T>
+template <typename T>
 class Singleton {
  public:
-    static T* getInstance() {
-        static T v;
-        return &v;
-    }
+  static T* getInstance() {
+    static T v;
+    return &v;
+  }
 };
 
 }  // namespace swallow

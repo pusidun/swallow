@@ -12,12 +12,12 @@ namespace swallow {
 
 class nocopyable {
  protected:
-    nocopyable() = default;
-    ~nocopyable() = default;
+  nocopyable() = default;
+  ~nocopyable() = default;
 
  public:
-    nocopyable(const nocopyable&) = delete;
-    nocopyable& operator=(const nocopyable&) = delete;
+  nocopyable(const nocopyable&) = delete;
+  nocopyable& operator=(const nocopyable&) = delete;
 };
 
 }  // namespace swallow

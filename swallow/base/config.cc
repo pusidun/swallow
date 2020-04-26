@@ -6,13 +6,11 @@
  * @date 2020-04-05
  */
 
- #include<memory>
- #include<list>
- #include<set>
- #include<vector>
- #include "config.h"
+#include "config.h"
 
- namespace swallow {
+#include <list>
+#include <memory>
+#include <set>
+#include <vector>
 
- }  // namespace swallow
- 
+namespace swallow {}  // namespace swallow
