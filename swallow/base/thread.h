@@ -2,20 +2,36 @@
  * @copyright Copyright [2019]
  * @author pusidun@hotmail.com
  * @file thread.h
- * @brief thread class
+ * @brief thread class,using posix thread library
  * @date 2019-11-19
  */
 #ifndef SWALLOW_BASE_THREAD_H_
 #define SWALLOW_BASE_THREAD_H_
 
 #include <pthread.h>
-
+#include <semaphore.h>
 #include <functional>
 #include <memory>
 #include <string>
 
 
 namespace swallow {
+
+class Semaphore {
+ public:
+  Semaphore(uint32_t cnt = 0);
+  ~Semaphore();
+  void wait();
+  void post();
+
+ private:
+  Semaphore(const Semaphore&) = delete;
+  Semaphore(const Semaphore&&) = delete;
+  Semaphore& operator=(const Semaphore&) = delete;
+
+ private:
+  sem_t m_sem;
+};
 
 class Thread {
  public:
