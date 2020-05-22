@@ -5,21 +5,19 @@
  * @brief coroutinue class
  * @date 2020-04-14
  */
-#include "coroutine.h"
-
 #include <cassert>
 #include <iostream>
-
+#include "coroutine.h"
 #include "log.h"
 
 namespace swallow {
+// 主协程,所有协程和主协程切换
+static thread_local std::shared_ptr<Coroutine> s_main_co;
+// 当前运行协程
+static thread_local Coroutine* s_curr_co = nullptr;
 
-static thread_local std::shared_ptr<Coroutine>
-    s_main_co;  // 主协程,所以协程和主协程切换
-static thread_local Coroutine* s_curr_co = nullptr;  // 当前运行协程
-
-Coroutine::Coroutine(uint64_t stack_size, CB cb, void* args)
-    : stacksize(stack_size), m_cb(cb), m_args(args) {
+Coroutine::Coroutine(uint64_t stack_size, CB cb)
+    : stacksize(stack_size), m_cb(cb) {
   m_stack = (char*)malloc(stacksize);
   assert(m_stack != nullptr);
   getcontext(&m_ctx);
@@ -28,10 +26,7 @@ Coroutine::Coroutine(uint64_t stack_size, CB cb, void* args)
   m_ctx.uc_link = nullptr;
 
   m_state = READY;
-  // makecontext的变长参数默认大小是sizeof(int),
-  // 64bit机器指针默认8Byte,直接传有问题 拆分成2个32b的指针
-  uintptr_t ptr = (uintptr_t)args;
-  makecontext(&m_ctx, (void (*)(void))(MainFunc), 2, ptr, ptr >> 32);
+  makecontext(&m_ctx, MainFunc, 0);
 
   // 第一次运行时主协程为空,初始化线程局部变量
   if (!s_main_co) {
@@ -52,7 +47,7 @@ Coroutine::ptr Coroutine::GetCo() {
 void Coroutine::SetCo(Coroutine* co) { s_curr_co = co; }
 
 /*
- * @brief 挂起当前协程,切回主协程
+ * @brief 挂起当前协程,切回主协程: 1.当前协程设置为主协程 2.RUNNING状态修改为SUSPEND 3.主协程设置为运行,切换
  */
 void Coroutine::yield() {
   SetCo(s_main_co.get());
@@ -66,7 +61,7 @@ void Coroutine::yield() {
 }
 
 /*
- * @brief 恢复协程
+ * @brief 恢复协程 1.当前协程设置为本协程 2.READY SUSPEND状态下,切换到本协程
  */
 void Coroutine::resume() {
   SetCo(this);
@@ -77,16 +72,17 @@ void Coroutine::resume() {
   }
 }
 
-void Coroutine::MainFunc(uint32_t low32, uint32_t hi32) {
+void Coroutine::MainFunc() {
   Coroutine::ptr co = GetCo();
-  uintptr_t arg = ((uintptr_t)hi32 << 32) | (uintptr_t)low32;
   try {
     assert(co->m_state == RUNNING);
-    co->m_cb((void*)arg);
+    co->m_cb();
     co->m_cb = nullptr;
     co->m_state = DEAD;
   } catch (...) {
+    throw std::logic_error("coroutine failed");
   }
+  // co会让引用计数+1 这里需要释放一次.执行完毕yield到主协程
   auto r = co.get();
   co.reset();
   r->yield();

@@ -60,6 +60,7 @@ class Thread {
   pthread_t m_thread = 0;
   std::function<void()> m_cb;
   std::string m_name;
+  Semaphore m_sem;
 };
 
 }  // namespace swallow

@@ -8,7 +8,6 @@
 #ifndef SWALLOW_BASE_COROUTINE_H_
 #define SWALLOW_BASE_COROUTINE_H_
 #include <ucontext.h>
-
 #include <cassert>
 #include <functional>
 #include <memory>
@@ -20,11 +19,11 @@ namespace swallow {
 class Coroutine : public std::enable_shared_from_this<Coroutine> {
  public:
   typedef std::shared_ptr<Coroutine> ptr;
-  typedef void (*CB)(void*);
+  typedef std::function<void()> CB;
 
   enum coState { READY = 0, RUNNING = 1, SUSPEND = 2, DEAD = 3 };
 
-  Coroutine(uint64_t stack_size, CB cb, void* args);
+  Coroutine(uint64_t stack_size, CB cb);
 
   ~Coroutine();
 
@@ -50,7 +49,10 @@ class Coroutine : public std::enable_shared_from_this<Coroutine> {
    */
   static void SetCo(Coroutine* co);
 
-  static void MainFunc(uint32_t low32, uint32_t hi32);
+  /*
+   * @brief swapcontext时执行该函数
+   */
+  static void MainFunc();
 
  private:
   /*
@@ -68,9 +70,6 @@ class Coroutine : public std::enable_shared_from_this<Coroutine> {
   char* m_stack;
   uint64_t stacksize = 1024 * 128;
   CB m_cb;
-  void* m_args;
-
-  Logger::ptr m_log = SWALLOW_LOG_GET("coroutine");
 };
 
 }  // namespace swallow

@@ -1,6 +1,6 @@
-#include "thread.h"
 #include <functional>
 #include <memory>
+#include "thread.h"
 
 namespace swallow {
 
@@ -29,9 +29,11 @@ void Semaphore::post() {
  * @brief Thread impl
  **/
 Thread::Thread(std::function<void()> cb, const std::string& name)
-    : m_cb(cb), m_name(name) {
+    : m_cb(cb), m_name(name), m_sem(1) {
   if (m_name.empty()) m_name = "UNKNOW";
-  pthread_create(&m_thread, nullptr, Thread::run, this);
+  if(pthread_create(&m_thread, nullptr, Thread::run, this) < 0) {
+
+  }
 }
 
 Thread::~Thread() { pthread_detach(m_thread); }
@@ -68,4 +70,5 @@ void* Thread::run(void* args) {
   cb();
   return 0;
 }
+
 }  // namespace swallow
