@@ -30,4 +30,8 @@ target_link_libraries(log_example ${LIBS})
 add_executable(coroutine_example examples/coroutine_example.cc)
 target_link_libraries(coroutine_example ${LIBS})
 
+# 调度测试类
+add_executable(schedule_example examples/schedule_example.cc)
+target_link_libraries(schedule_example ${LIBS})
+
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)

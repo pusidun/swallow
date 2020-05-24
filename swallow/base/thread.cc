@@ -1,12 +1,16 @@
 #include <functional>
 #include <memory>
+#include <iostream>
 #include "thread.h"
+#include "log.h"
 
 namespace swallow {
 
 //当前线程和当前线程名
 static thread_local Thread* t_thread = nullptr;
 static thread_local std::string t_name = "UNKNOW";
+
+static swallow::Logger::ptr g_logger = SWALLOW_LOG_GET("system");
 
 /**
  * @brief Semaphore impl
@@ -31,9 +35,11 @@ void Semaphore::post() {
 Thread::Thread(std::function<void()> cb, const std::string& name)
     : m_cb(cb), m_name(name), m_sem(1) {
   if (m_name.empty()) m_name = "UNKNOW";
-  if(pthread_create(&m_thread, nullptr, Thread::run, this) < 0) {
-
+  int ret = pthread_create(&m_thread, nullptr, Thread::run, this);
+  if( ret ) {
+    SWALLOW_LOG_ERROR(g_logger) << "pthread create failed";
   }
+  m_sem.wait();
 }
 
 Thread::~Thread() { pthread_detach(m_thread); }
@@ -54,6 +60,7 @@ void Thread::SetName(const std::string& name) {
 }
 
 void* Thread::run(void* args) {
+  std::cout<<"Thread run"<<std::endl;
   Thread* thread = (Thread*)args;
   t_thread = thread;
   t_name = t_thread->m_name;
@@ -67,6 +74,7 @@ void* Thread::run(void* args) {
 
   std::function<void()> cb;
   cb.swap(t_thread->m_cb);
+  thread->m_sem.post();
   cb();
   return 0;
 }

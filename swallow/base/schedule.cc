@@ -30,6 +30,7 @@ Schedule* Schedule::GetThis() {
 
 // 每个线程执行的函数，调度本线程内的协程
 void Schedule::co_run() {
+    std::cout<<"co_run"<<std::endl;
     s_t_sch = this;
     while(true) {
         Coroutine::ptr  run_co = nullptr;
@@ -61,13 +62,6 @@ void Schedule::co_run() {
 void Schedule::idle() {
     SWALLOW_LOG_INFO(log) << "schedule idle...";
     sleep(1);
-}
-
-template<typename Func>
-void Schedule::schedule(Func f, int thread) {
-    CoInThreads cothreads(std::make_shared<Coroutine::ptr>(128, f), thread);
-    std::lock_guard<std::mutex> guard(mtx_co);
-    m_co.push_back(cothreads);
 }
 
 }

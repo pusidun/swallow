@@ -40,10 +40,15 @@ class Schedule {
 
   ~Schedule();
 
-  template<typename Func>
-  void schedule(Func f, int thread = 1);
+  
+template<typename Func>
+void schedule(Func f, int thread) {
+    CoInThreads cothreads(std::make_shared<Coroutine>(128, f), thread);
+    std::lock_guard<std::mutex> guard(mtx_co);
+    m_co.push_back(cothreads);
+}
 
-  void start();
+  //void start();
   void stop();
 
   // 线程空转时执行该协程
