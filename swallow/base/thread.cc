@@ -12,6 +12,8 @@ static thread_local std::string t_name = "UNKNOW";
 
 static swallow::Logger::ptr g_logger = SWALLOW_LOG_GET("system");
 
+std::atomic<uint64_t> tid = {0};
+
 /**
  * @brief Semaphore impl
  **/
@@ -39,6 +41,8 @@ Thread::Thread(std::function<void()> cb, const std::string& name)
   if( ret ) {
     SWALLOW_LOG_ERROR(g_logger) << "pthread create failed";
   }
+  m_id = tid;
+  ++tid;
   m_sem.wait();
 }
 
@@ -60,7 +64,6 @@ void Thread::SetName(const std::string& name) {
 }
 
 void* Thread::run(void* args) {
-  std::cout<<"Thread run"<<std::endl;
   Thread* thread = (Thread*)args;
   t_thread = thread;
   t_name = t_thread->m_name;

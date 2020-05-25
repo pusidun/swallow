@@ -13,7 +13,7 @@
 #include <functional>
 #include <memory>
 #include <string>
-
+#include <atomic>
 
 namespace swallow {
 
@@ -40,7 +40,7 @@ class Thread {
   Thread(std::function<void()> cb, const std::string& name);
   ~Thread();
 
-  pid_t getId() const { return m_id; }
+  int64_t getId() const { return m_id; }
   const std::string& getName() const { return m_name; }
 
   void join();
@@ -56,7 +56,7 @@ class Thread {
   static void* run(void* args);
 
  private:
-  pid_t m_id = -1;
+  int64_t m_id = -1;
   pthread_t m_thread = 0;
   std::function<void()> m_cb;
   std::string m_name;

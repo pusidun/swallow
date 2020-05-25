@@ -12,7 +12,7 @@
 
 namespace swallow {
 // 主协程,所有协程和主协程切换
-static thread_local std::shared_ptr<Coroutine> s_main_co;
+static thread_local std::shared_ptr<Coroutine> s_main_co = nullptr;
 // 当前运行协程
 static thread_local Coroutine* s_curr_co = nullptr;
 
@@ -67,6 +67,7 @@ void Coroutine::resume() {
   SetCo(this);
   if (m_state == READY || m_state == SUSPEND) {
     m_state = RUNNING;
+    assert(s_main_co != nullptr);
     s_main_co->m_state = SUSPEND;
     swapcontext(&(s_main_co->m_ctx), &m_ctx);
   }

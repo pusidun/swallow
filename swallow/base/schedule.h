@@ -26,7 +26,7 @@ class CoInThreads {
   CoInThreads(Coroutine::ptr p, int id = 0) : tid(id) {
     co.swap(p);
   }
-  int tid; //Schedule m_threads的下标
+  int64_t tid; //Schedule m_threads的下标
   Coroutine::ptr co;
 };
 
@@ -41,15 +41,19 @@ class Schedule {
   ~Schedule();
 
   
-template<typename Func>
-void schedule(Func f, int thread) {
-    CoInThreads cothreads(std::make_shared<Coroutine>(128, f), thread);
+  template<typename Func>
+  void schedule(Func f, int threadid) {
+    CoInThreads cothreads(std::make_shared<Coroutine>(STACKSIZE, f), threadid);
     std::lock_guard<std::mutex> guard(mtx_co);
     m_co.push_back(cothreads);
-}
+  }
 
-  //void start();
+  void start();
   void stop();
+  bool isStop();
+
+  //协程yield出来，加入待处理队列m_co
+  void yield();
 
   // 线程空转时执行该协程
   virtual void idle();
@@ -63,8 +67,11 @@ void schedule(Func f, int thread) {
  private:
   std::vector<Thread::ptr> m_threads;
   std::mutex mtx_co;
-  std::list<CoInThreads> m_co;
+  std::list<CoInThreads> m_co;  // 待处理协程队列
   int m_thread_num;
+  Coroutine::ptr root_co;
+  std::atomic<int> m_running_co = {0};
+  bool m_stop;
 };
 
 }  // namespace swallow
