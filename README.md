@@ -1,5 +1,7 @@
 # swallow
 
+[![Build Status](https://travis-ci.org/pusidun/swallow.svg?branch=master)](https://travis-ci.org/pusidun/swallow)
+
 ## Introduction
 
 A c++ library
