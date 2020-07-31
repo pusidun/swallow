@@ -8,6 +8,7 @@
 #ifndef SWALLOW_BASE_COROUTINE_H_
 #define SWALLOW_BASE_COROUTINE_H_
 #include <ucontext.h>
+
 #include <cassert>
 #include <functional>
 #include <memory>

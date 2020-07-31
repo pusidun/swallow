@@ -10,10 +10,12 @@
 
 #include <pthread.h>
 #include <semaphore.h>
+
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <string>
-#include <atomic>
+
 
 namespace swallow {
 

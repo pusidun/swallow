@@ -1,3 +1,10 @@
+/**
+ * @copyright Copyright [2020]
+ * @author pusidun@hotmail.com
+ * @file process.cc
+ * @brief process class
+ * @date 2020-03-18
+ */
 #include "process.h"
 
 #include <signal.h>
@@ -7,7 +14,6 @@
 
 #include <sstream>
 #include <string>
-
 
 namespace swallow {
 

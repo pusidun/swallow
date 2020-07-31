@@ -9,10 +9,11 @@
 #define SWALLOW_BASE_SCHEDULE_H_
 #include <atomic>
 #include <list>
-#include <vector>
 #include <mutex>
-#include "thread.h"
+#include <vector>
+
 #include "coroutine.h"
+#include "thread.h"
 
 #define STACKSIZE 1024 * 1024
 
@@ -23,25 +24,21 @@ thread_local std::atomic<long long> co_id;
 // 线程中的协程信息
 class CoInThreads {
  public:
-  CoInThreads(Coroutine::ptr p, int id = 0) : tid(id) {
-    co.swap(p);
-  }
-  int64_t tid; //Schedule m_threads的下标
+  CoInThreads(Coroutine::ptr p, int id = 0) : tid(id) { co.swap(p); }
+  int64_t tid;  // Schedule m_threads的下标
   Coroutine::ptr co;
 };
 
 /*
-* @brief 维护线程队列，协程挂到空闲的线程执行
-*/
+ * @brief 维护线程队列，协程挂到空闲的线程执行
+ */
 class Schedule {
  public:
-
   Schedule(int thread_num = 1);
 
   ~Schedule();
 
-  
-  template<typename Func>
+  template <typename Func>
   void schedule(Func f, int threadid) {
     CoInThreads cothreads(std::make_shared<Coroutine>(STACKSIZE, f), threadid);
     std::lock_guard<std::mutex> guard(mtx_co);
@@ -76,4 +73,4 @@ class Schedule {
 
 }  // namespace swallow
 
-#endif
+#endif  // SWALLOW_BASE_SCHEDULE_H_

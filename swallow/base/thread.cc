@@ -1,12 +1,22 @@
-#include <functional>
-#include <memory>
-#include <iostream>
+/**
+ * @copyright Copyright [2020]
+ * @author pusidun@hotmail.com
+ * @file thread.h
+ * @brief thread header
+ * @date 2020-03-18
+ */
 #include "thread.h"
+
+#include <functional>
+#include <iostream>
+#include <memory>
+
 #include "log.h"
+
 
 namespace swallow {
 
-//当前线程和当前线程名
+// 当前线程和当前线程名
 static thread_local Thread* t_thread = nullptr;
 static thread_local std::string t_name = "UNKNOW";
 
@@ -38,7 +48,7 @@ Thread::Thread(std::function<void()> cb, const std::string& name)
     : m_cb(cb), m_name(name), m_sem(1) {
   if (m_name.empty()) m_name = "UNKNOW";
   int ret = pthread_create(&m_thread, nullptr, Thread::run, this);
-  if( ret ) {
+  if (ret) {
     SWALLOW_LOG_ERROR(g_logger) << "pthread create failed";
   }
   m_id = tid;
@@ -69,10 +79,10 @@ void* Thread::run(void* args) {
   t_name = t_thread->m_name;
   pthread_setname_np(pthread_self(), t_name.substr(0, 15).c_str());
 
-  //设置线程的取消状态和取消类型
-  //允许取消
+  // 设置线程的取消状态和取消类型
+  // 允许取消
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
-  //取消后立即退出，可能存在资源未释放问题，用户线程需要做好应对
+  // 取消后立即退出，可能存在资源未释放问题，用户线程需要做好应对
   pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, nullptr);
 
   std::function<void()> cb;

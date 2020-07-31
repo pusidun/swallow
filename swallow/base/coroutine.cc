@@ -5,9 +5,11 @@
  * @brief coroutinue class
  * @date 2020-04-14
  */
+#include "coroutine.h"
+
 #include <cassert>
 #include <iostream>
-#include "coroutine.h"
+
 #include "log.h"
 
 namespace swallow {
@@ -18,7 +20,7 @@ static thread_local Coroutine* s_curr_co = nullptr;
 
 Coroutine::Coroutine(uint64_t stack_size, CB cb)
     : stacksize(stack_size), m_cb(cb) {
-  m_stack = (char*)malloc(stacksize);
+  m_stack = reinterpret_cast<char*>(malloc(stacksize));
   assert(m_stack != nullptr);
   getcontext(&m_ctx);
   m_ctx.uc_stack.ss_sp = m_stack;
@@ -47,7 +49,8 @@ Coroutine::ptr Coroutine::GetCo() {
 void Coroutine::SetCo(Coroutine* co) { s_curr_co = co; }
 
 /*
- * @brief 挂起当前协程,切回主协程: 1.当前协程设置为主协程 2.RUNNING状态修改为SUSPEND 3.主协程设置为运行,切换
+ * @brief
+ * 挂起当前协程,切回主协程: 1.当前协程设置为主协程 2.RUNNING状态修改为SUSPEND 3.主协程设置为运行,切换
  */
 void Coroutine::yield() {
   SetCo(s_main_co.get());

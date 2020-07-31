@@ -8,13 +8,13 @@
 #ifndef SWALLOW_BASE_CONFIG_H_
 #define SWALLOW_BASE_CONFIG_H_
 
-#include <boost/lexical_cast.hpp>
 #include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
+#include <boost/lexical_cast.hpp>
 // #include <boost/property_tree/ptree.hpp>
 // #include <boost/property_tree/json_parser.hpp>
 // #include <boost/date_time.hpp>

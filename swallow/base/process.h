@@ -1,3 +1,10 @@
+/**
+ * @copyright Copyright [2020]
+ * @author pusidun@hotmail.com
+ * @file process.h
+ * @brief process header
+ * @date 2020-03-18
+ */
 #ifndef SWALLOW_BASE_PROCESS_H_
 #define SWALLOW_BASE_PROCESS_H_
 
@@ -5,7 +12,6 @@
 #include <string>
 
 #include "singleton.h"
-
 
 namespace swallow {
 
@@ -33,4 +39,4 @@ Singleton<ProcessInfo> ProcessMgr;
 
 }  // namespace swallow
 
-#endif
+#endif  // SWALLOW_BASE_PROCESS_H_

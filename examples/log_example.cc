@@ -7,7 +7,6 @@
 
 #include "log.h"
 
-
 int64_t get_current_millis(void) {
   struct timeval tv;
   gettimeofday(&tv, NULL);

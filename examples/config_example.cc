@@ -7,7 +7,7 @@
 
 using namespace swallow;
 
-void print_cb(const float& old, const float& now) {
+void print_cb(const float &old, const float &now) {
   SWALLOW_LOG_INFO(SWALLOW_LOG_ROOT())
       << "config change , old value :" << old << " new value:" << now;
 }
