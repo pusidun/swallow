@@ -15,5 +15,5 @@ add_executable(schedule_example schedule_example.cc)
 target_link_libraries(schedule_example swallow)
 
 # Redis类
-#add_executable(redis_example redis_example.cc)
-#target_link_libraries(redis_example swallow hiredis)
+add_executable(redis_example redis_example.cc)
+target_link_libraries(redis_example swallow hiredis)

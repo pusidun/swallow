@@ -70,7 +70,18 @@ bool Redis::connect(const std::string& ip, int port, uint64_t ms) {
     m_context.reset(ctx, redisFree);
     if (!getPasswd().empty()) {
       auto r = (redisReply*)redisCommand(ctx, "auth %s", getPasswd().c_str());
-      if (strcmp(r->str, "OK")) return true;
+      if(!r || r->str || r->type != REDIS_REPLY_STATUS) {
+        SWALLOW_LOG_ERROR(log) << "redis authority failed. ip:" << m_host 
+            << " port:" << m_port;
+        return false; 
+      }
+      if (strcmp(r->str, "OK")) 
+        return true;
+      else {
+        SWALLOW_LOG_ERROR(log) << "redis authority failed. ip:" << m_host 
+            << " port:" << m_port;
+        return false;
+      }
     }
     return true;
   }

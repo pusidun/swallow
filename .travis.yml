@@ -1,5 +1,5 @@
 language: cpp
-dist: bionic
+dist: xenial
 compiler: gcc
 sudo: true
 
@@ -9,11 +9,13 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-6 
+      - libboost-dev
 
 services:
   - redis-server
 
 before_install:
+  - export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
   - wget https://github.com/google/googletest/archive/release-1.10.0.tar.gz
   - tar zxvf release-1.10.0.tar.gz
   - pip install cpplint
@@ -22,9 +24,15 @@ install:
   - cd googletest-release-1.10.0 && cmake . && make && sudo make install
   - pwd
   - cd ..
+  - git clone https://github.com/redis/hiredis
+  - cd hiredis && make
+  - sudo make install && cd ..
 
 script:
   - CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6
   - mkdir build && cd build && cmake .. && make
   - cd .. && ls && bash test.sh
-  - cpplint examples/*.cc  test/*.cc
+  - cpplint examples/*.cc test/*.cc
+  - ls /usr/local/lib/libhiredis*
+  - ldd bin/test_redis
+  - echo ${LD_LIBRARY_PATH}

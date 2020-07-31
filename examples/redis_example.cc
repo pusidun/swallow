@@ -32,7 +32,9 @@ void printReply(redisReply* ptr) {
 
 int main() {
   swallow::Redis cli;
-  cli.connect("127.0.0.1", 6379, 100);
+  if (cli.connect("127.0.0.1", 6379, 100)) {
+    std::cout << "cannot connect redis" << std::endl;
+  }
 
   swallow::ReplyPtr reply = cli.cmd("SETNX foo bar");
   printReply(reply.get());

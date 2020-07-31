@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 project(swallow VERSION 1.0)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_CXX_FLAGS " -rdynamic -O3 -g -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function")
+set(CMAKE_CXX_FLAGS " -rdynamic -O3 -g -Wall -Wno-deprecated -Werror -Wno-unused-function")
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
@@ -31,6 +31,10 @@ if(GTEST_INCLUDE_DIR AND GTEST_LIBRARY)
 endif()
 
 include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${HIREDIS_INCLUDE_DIR})
+link_directories(${HIREDIS_LIBRARY})
+include_directories(${GTEST_INCLUDE_DIR})
+link_directories(${GTEST_LIBRARY})
 include_directories(${PROJECT_SOURCE_DIR})
 
 add_subdirectory(swallow/base)
