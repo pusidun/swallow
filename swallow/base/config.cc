@@ -6,7 +6,7 @@
  * @date 2020-04-05
  */
 
-#include "config.h"
+#include "swallow/base/config.h"
 
 #include <list>
 #include <memory>

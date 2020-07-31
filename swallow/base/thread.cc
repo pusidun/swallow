@@ -5,13 +5,13 @@
  * @brief thread header
  * @date 2020-03-18
  */
-#include "thread.h"
+#include "swallow/base/thread.h"
 
 #include <functional>
 #include <iostream>
 #include <memory>
 
-#include "log.h"
+#include "swallow/base/log.h"
 
 
 namespace swallow {

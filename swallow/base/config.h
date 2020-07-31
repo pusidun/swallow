@@ -14,6 +14,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <list>
 #include <boost/lexical_cast.hpp>
 // #include <boost/property_tree/ptree.hpp>
 // #include <boost/property_tree/json_parser.hpp>

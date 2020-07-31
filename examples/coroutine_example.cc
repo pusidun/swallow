@@ -4,9 +4,9 @@
 #include <cstdlib>
 #include <memory>
 
-#include "coroutine.h"
-#include "log.h"
-#include "thread.h"
+#include "swallow/base/coroutine.h"
+#include "swallow/base/log.h"
+#include "swallow/base/thread.h"
 
 #define THREADNUM 3
 

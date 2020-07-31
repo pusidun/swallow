@@ -1,11 +1,9 @@
 // Copyright [2019] <Copyright pusidun@hotmail.com>
 #include <memory>
 
-#include "config.h"
-#include "lock.h"
-#include "log.h"
-
-using namespace swallow;
+#include "swallow/base/config.h"
+#include "swallow/base/lock.h"
+#include "swallow/base/log.h"
 
 void print_cb(const float &old, const float &now) {
   SWALLOW_LOG_INFO(SWALLOW_LOG_ROOT())

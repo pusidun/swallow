@@ -5,15 +5,17 @@
  * @brief process class
  * @date 2020-03-18
  */
-#include "process.h"
+#include "swallow/base/process.h"
 
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <sstream>
 #include <string>
+#include "swallow/base/log.h"
 
 namespace swallow {
 

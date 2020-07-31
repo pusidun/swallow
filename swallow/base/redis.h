@@ -13,7 +13,7 @@
 #include <memory>
 #include <vector>
 
-#include "hiredis.h"
+#include "hiredis/hiredis.h"
 
 namespace swallow {
 

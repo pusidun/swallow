@@ -5,12 +5,12 @@
  * @brief redis class
  * @date 2020-03-18
  */
-#include "redis.h"
+#include "swallow/base/redis.h"
 
 #include <cstring>
 #include <string>
 
-#include "log.h"
+#include "swallow/base/log.h"
 
 namespace swallow {
 

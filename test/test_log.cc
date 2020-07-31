@@ -1,7 +1,7 @@
 // Copyright [2020] <Copyright pusidun@hotmail.com>
 #include <gtest/gtest.h>
 
-#include "log.h"
+#include "swallow/base/log.h"
 
 TEST(LogTest, HandleLogFormat) {
   swallow::Logger::ptr logger(new swallow::Logger);

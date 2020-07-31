@@ -1,9 +1,9 @@
 // Copyright [2020] <Copyright pusidun@hotmail.com>
 #include <unistd.h>
 
-#include "coroutine.h"
-#include "log.h"
-#include "schedule.h"
+#include "swallow/base/coroutine.h"
+#include "swallow/base/log.h"
+#include "swallow/base/schedule.h"
 
 void foo() {
   SWALLOW_LOG_INFO(SWALLOW_LOG_ROOT()) << "foo before yield";
