@@ -8,14 +8,16 @@
 #include "swallow/base/process.h"
 
 #include <signal.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 #include <sstream>
 #include <string>
+
 #include "swallow/base/log.h"
+
 
 namespace swallow {
 
@@ -43,9 +45,10 @@ static int start_daemon(int argc, char** argv,
     // 此时子进程被收养,parent pid = 1，进行设置后将此进程当做守护进程
     ProcessMgr.getInstance()->parent_pid = getpid();
     setsid();
-    chdir("/");
+    if (chdir("/") != 0) { SWALLOW_LOG_INFO(g_logger) << "change dir failed!"; }
     umask(0);
-    for (int i = 0; i < MAXFILE; ++i) close(i);
+    // for (int i = 0; i < MAXFILE; ++i) close(i);
+    signal(SIGHUP, SIG_IGN);
 
     while (true) {
       pid = fork();
@@ -58,25 +61,33 @@ static int start_daemon(int argc, char** argv,
         return cb(argc, argv);
       } else if (pid > 0) {
         // 守护进程
-        int status;
+        int* status;
 
-        waitpid(pid, status);
-        if (status != 0) {
+        waitpid(pid, status, 0);
+        if (!status) {
+          SWALLOW_LOG_INFO(g_logger) << "status is NULL, daemon exit";
+          exit(0);
+        }
+        if (WIFEXITED(status)) {
           SWALLOW_LOG_INFO(g_logger) << "child process finished.";
           break;
         }
-        if (status == SIGKILL) {
+        if (WIFSIGNALED(status) && WTERMSIG(status) == SIGKILL) {
           SWALLOW_LOG_INFO(g_logger) << "child process killed.";
           break;
-        } else {
-          SWALLOW_LOG_ERROR(g_logger) << "";
         }
-        ProcessMgr.getInstance()->reboot_num++;
+        SWALLOW_LOG_ERROR(g_logger) << "child process abort!";
+        SWALLOW_LOG_INFO(g_logger)
+            << "daemon will restart childprocess"
+            << " reboot_num: " << ProcessMgr.getInstance()->reboot_num++;
+
         sleep(5);
       }
     }
+    // 守护进程退出
     return 0;
   }
+  return -1;
 }
 
 int start_process(int argc, char** argv, std::function<int(int, char**)> cb,

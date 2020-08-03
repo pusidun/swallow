@@ -22,8 +22,8 @@
 #include <string>
 #include <vector>
 
-#include "lock.h"
-#include "singleton.h"
+#include "swallow/base/lock.h"
+#include "swallow/base/singleton.h"
 
 /**
  * @brief log stream macros

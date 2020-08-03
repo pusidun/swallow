@@ -11,7 +11,8 @@
 #include <functional>
 #include <string>
 
-#include "singleton.h"
+#include "swallow/base/singleton.h"
+
 
 namespace swallow {
 

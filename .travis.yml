@@ -32,7 +32,4 @@ script:
   - CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6
   - mkdir build && cd build && cmake .. && make
   - cd .. && ls && bash test.sh
-  - cpplint examples/*.cc test/*.cc
-  - ls /usr/local/lib/libhiredis*
-  - ldd bin/test_redis
-  - echo ${LD_LIBRARY_PATH}
+  - cpplint examples/*.cc test/*.cc swallow/base/process* swallow/base/log*

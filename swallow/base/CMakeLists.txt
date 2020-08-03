@@ -3,7 +3,7 @@ set(BASE_SRCS
     config.cc
     coroutine.cc
     log.cc
-    #process.cc
+    process.cc
     redis.cc
     schedule.cc
     thread.cc

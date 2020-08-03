@@ -27,6 +27,12 @@ After make, shared library will be in ${project}/lib and binary file in ${projec
 - coroutine
 - redis
 
+## TODO
+
+[*] Travis-ci
+[ ] add test
+[ ] net library
+
 ## LICENSE
 
 This code is released under MIT.
