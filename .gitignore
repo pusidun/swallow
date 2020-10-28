@@ -44,3 +44,7 @@ build/*
 
 #VSCode
 .vscode
+
+#Clion
+cmake-build-debug/*
+.idea/*

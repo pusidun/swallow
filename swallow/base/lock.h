@@ -2,7 +2,7 @@
  * @copyright Copyright [2019]
  * @author pusidun@hotmail.com
  * @file lock.h
- * @brief log class
+ * @brief wrapper of pthread lock.
  * @date 2019-11-12
  */
 #ifndef SWALLOW_BASE_LOCK_H_

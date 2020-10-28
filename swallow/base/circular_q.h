@@ -42,8 +42,8 @@ class circular_q {
  private:
   size_t max_size;
   std::vector<T> _q;
-  typename vector<T>::size_type front = 0;  // 队首
-  typename vector<T>::size_type rear = 0;   // 尾后
+  typename std::vector<T>::size_type front = 0;  // 队首
+  typename std::vector<T>::size_type rear = 0;   // 尾后
 };
 
 }  // namespace swallow

@@ -8,9 +8,10 @@
 #ifndef SWALLOW_BASE_LOG_H_
 #define SWALLOW_BASE_LOG_H_
 
-#include <pthread.h>
 #include <time.h>
 
+#include <chrono>
+#include <condition_variable>
 #include <cstdarg>
 #include <cstdint>
 #include <fstream>
@@ -18,12 +19,14 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
-#include "swallow/base/lock.h"
 #include "swallow/base/singleton.h"
+#include "threadpool.h"
 
 /**
  * @brief log stream macros
@@ -187,6 +190,7 @@ class LogFormatter {
   bool m_error = false;  // TODO(pusidun): format error.
 };
 
+/* virtual base class */
 class LogAppender {
  public:
   typedef std::shared_ptr<LogAppender> ptr;
@@ -202,8 +206,8 @@ class LogAppender {
 
  protected:
   LogLevel::Level m_level = LogLevel::DEBUG;
+  std::mutex m_mutex;
   bool m_hasFormatter = false;
-  MutexLock m_mutex;
   LogFormatter::ptr m_formatter;
 };
 
@@ -222,11 +226,46 @@ class FileLogAppender : public LogAppender {
            LogEvent::ptr event) override;
   bool reopen();
 
+ protected:
+  FileLogAppender() = default;
+
  private:
   std::string m_filename;
   std::ofstream m_filestream;
   // last open time
   uint64_t m_lastTime = 0;
+};
+
+class AsyncFileLogAppender : public FileLogAppender {
+ public:
+  explicit AsyncFileLogAppender(const std::string& filename)
+      : m_filename(filename),
+        m_thread(std::bind(&AsyncFileLogAppender::threadFunc, this)),
+        m_running(true) {}
+
+  ~AsyncFileLogAppender() {
+    if (m_running) stop();
+  }
+
+  void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
+           LogEvent::ptr event) override;
+
+  void stop() {
+    m_running = false;
+    m_cond.notify_one();
+    m_thread.join();
+  }
+
+ private:
+  void threadFunc();
+
+ private:
+  std::string m_filename;
+  std::thread m_thread;
+  std::mutex m_mutex;
+  std::condition_variable m_cond;
+  std::list<std::string> m_msg_q;
+  std::atomic_bool m_running;
 };
 
 class Logger : public std::enable_shared_from_this<Logger> {
@@ -266,7 +305,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
  private:
   std::string m_name;
   LogLevel::Level m_level = LogLevel::DEBUG;
-  MutexLock m_mutex;
+  std::mutex m_mutex;
   std::list<LogAppender::ptr> m_appenders;
   LogFormatter::ptr m_formatter;
   Logger::ptr m_root;
@@ -280,16 +319,41 @@ class LoggerManager {
     m_loggers[m_root->m_name] = m_root;
   }
   Logger::ptr getLogger(const std::string& name);
-  // void init();
+
   Logger::ptr getRoot() const { return m_root; }
 
  private:
   std::map<std::string, Logger::ptr> m_loggers;
   Logger::ptr m_root;
-  MutexLock m_mutex;
+  std::mutex m_mutex;
 };
 
 typedef Singleton<LoggerManager> LoggerMgr;
+
+/* default logger API */
+inline std::shared_ptr<Logger> default_logger() {
+  return LoggerMgr::getInstance()->getRoot();
+}
+
+inline void debug(const std::string& msg) {
+  SWALLOW_LOG_DEBUG(default_logger()) << msg;
+}
+
+inline void info(const std::string& msg) {
+  SWALLOW_LOG_INFO(default_logger()) << msg;
+}
+
+inline void warn(const std::string& msg) {
+  SWALLOW_LOG_WARN(default_logger()) << msg;
+}
+
+inline void error(const std::string& msg) {
+  SWALLOW_LOG_ERROR(default_logger()) << msg;
+}
+
+inline void fatal(const std::string& msg) {
+  SWALLOW_LOG_FATAL(default_logger()) << msg;
+}
 
 }  // namespace swallow
 

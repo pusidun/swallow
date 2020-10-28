@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include <iostream>
+#include <memory>
 
 #include "swallow/base/log.h"
 
@@ -14,27 +15,32 @@ int64_t get_current_millis(void) {
 }
 
 int main() {
-  swallow::Logger::ptr logger(new swallow::Logger);
-  swallow::LogFormatter::ptr fmt(
-      new swallow::LogFormatter("%f%T%l%T%d%T%p%T%r%T%c%m%n"));
+  /* 通过LoggerMgr去创建、获取log对象 */
+  auto logger = SWALLOW_LOG_GET("example_log");
+  auto fmt = std::make_shared<swallow::LogFormatter>("%f%T%l%T%d%T%p%T%r%T%c %m%n");
 
-  swallow::StdoutLogAppender::ptr stdoutappender(
-      new swallow::StdoutLogAppender);
+  /* add stdout appender */
+  auto stdoutappender = std::make_shared<swallow::StdoutLogAppender>();
   stdoutappender->setFormatter(fmt);
   stdoutappender->setLevel(swallow::LogLevel::DEBUG);
   logger->addAppender(stdoutappender);
 
-  swallow::FileLogAppender::ptr file_appender(
-      new swallow::FileLogAppender("./log.txt"));
+  auto file_appender = std::make_shared<swallow::AsyncFileLogAppender>("./log.txt");
   file_appender->setFormatter(fmt);
   file_appender->setLevel(swallow::LogLevel::DEBUG);
   logger->addAppender(file_appender);
 
+  SWALLOW_LOG_DEBUG(logger) << "TEST stdout and file output logs";
   SWALLOW_LOG_INFO(logger) << "TEST stdout and file output logs";
+  SWALLOW_LOG_WARN(logger) << "TEST stdout and file output logs";
+  SWALLOW_LOG_FATAL(logger) << "TEST stdout and file output logs";
+  SWALLOW_LOG_ERROR(logger) << "TEST stdout and file output logs";
 
-  auto root_log = SWALLOW_LOG_ROOT();
-  SWALLOW_LOG_WARN(root_log) << "root log test, micros test.";
-  SWALLOW_LOG_FMT_WARN(root_log, "c style fmt:%s %d", "success", 0);
-
+  /* 默认日志api.默认日志只输出到标准输出 */
+  swallow::debug("default debug");
+  swallow::info("default info");
+  swallow::warn("default warn");
+  swallow::fatal("default info");
+  swallow::error("default info");
   return 0;
 }

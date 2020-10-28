@@ -314,7 +314,7 @@ std::string LogFormatter::format(std::shared_ptr<Logger> logger,
  * @brief LogAppender impl
  */
 void LogAppender::setFormatter(LogFormatter::ptr val) {
-  MutexLockGuard guard(m_mutex);
+  std::lock_guard<std::mutex> guard(m_mutex);
   m_formatter = val;
 
   if (m_formatter)
@@ -324,7 +324,7 @@ void LogAppender::setFormatter(LogFormatter::ptr val) {
 }
 
 LogFormatter::ptr LogAppender::getFormatter() {
-  MutexLockGuard guard(m_mutex);
+  std::lock_guard<std::mutex> guard(m_mutex);
   return m_formatter;
 }
 
@@ -349,13 +349,13 @@ void FileLogAppender::log(Logger::ptr logger, LogLevel::Level level,
       reopen();
       m_lastTime = now;
     }
-    MutexLockGuard guard(m_mutex);
+    std::lock_guard<std::mutex> guard(m_mutex);
     m_filestream << LogAppender::m_formatter->format(logger, level, event);
   }
 }
 
 bool FileLogAppender::reopen() {
-  MutexLockGuard guard(m_mutex);
+  std::lock_guard<std::mutex> guard(m_mutex);
   if (m_filestream) {
     m_filestream.close();
   }
@@ -364,6 +364,35 @@ bool FileLogAppender::reopen() {
   return !!m_filestream;
 }
 
+void AsyncFileLogAppender::log(Logger::ptr logger, LogLevel::Level level,
+                               LogEvent::ptr event) {
+  if (level >= LogAppender::m_level) {
+    std::string msg = LogAppender::m_formatter->format(logger, level, event);
+    {
+      std::lock_guard<std::mutex> guard(m_mutex);
+      m_msg_q.push_back(msg);
+      m_cond.notify_one();
+    }
+  }
+}
+
+void AsyncFileLogAppender::threadFunc() {
+  while(m_running) {
+    std::list<std::string> lst;
+    {
+      std::unique_lock<std::mutex> locker(m_mutex);
+      lst.splice(lst.begin(), m_msg_q);
+      if(lst.empty())
+        m_cond.wait(locker);
+    }
+    std::ofstream fs;
+    fs.open(m_filename, std::ios::app);
+    if(fs) {
+      for(auto& str: lst)
+        fs << str;
+    }
+  }
+}
 /**
  * @brief Logger Impl
  */
@@ -375,7 +404,7 @@ Logger::Logger(const std::string& name)
 void Logger::log(LogLevel::Level level, LogEvent::ptr event) {
   if (level >= m_level) {
     auto self = shared_from_this();
-    MutexLockGuard guard(m_mutex);
+    std::lock_guard<std::mutex> guard(m_mutex);
     if (!m_appenders.empty()) {
       for (auto& i : m_appenders) i->log(self, level, event);
     } else if (m_root) {
@@ -401,7 +430,7 @@ void Logger::fatal(swallow::LogEvent::ptr event) {
 }
 
 void Logger::addAppender(LogAppender::ptr appender) {
-  MutexLockGuard guard(m_mutex);
+  std::lock_guard<std::mutex> guard(m_mutex);
   if (!appender->getFormatter()) {
     appender->setFormatter(m_formatter);
   }
@@ -409,7 +438,7 @@ void Logger::addAppender(LogAppender::ptr appender) {
 }
 
 void Logger::delAppender(LogAppender::ptr appender) {
-  MutexLockGuard guard(m_mutex);
+  std::lock_guard<std::mutex> guard(m_mutex);
   for (auto itr = m_appenders.begin(); itr != m_appenders.end(); ++itr) {
     if (*itr == appender) {
       m_appenders.erase(itr);
@@ -418,16 +447,16 @@ void Logger::delAppender(LogAppender::ptr appender) {
 }
 
 void Logger::clearAppender() {
-  MutexLockGuard guard(m_mutex);
+  std::lock_guard<std::mutex> guard(m_mutex);
   m_appenders.clear();
 }
 
 void Logger::setFormatter(LogFormatter::ptr val) {
-  MutexLockGuard guard(m_mutex);
+  std::lock_guard<std::mutex> guard(m_mutex);
   m_formatter = val;
 
   for (auto& i : m_appenders) {
-    MutexLockGuard iguard(i->m_mutex);
+    std::lock_guard<std::mutex> iguard(i->m_mutex);
     if (!i->m_hasFormatter) i->m_formatter = m_formatter;
   }
 }
@@ -441,7 +470,7 @@ void Logger::setFormatter(const std::string& val) {
 }
 
 LogFormatter::ptr Logger::getFormatter() {
-  MutexLockGuard guard(m_mutex);
+  std::lock_guard<std::mutex> guard(m_mutex);
   return m_formatter;
 }
 
@@ -452,7 +481,7 @@ void Logger::setLevel(LogLevel::Level level) { m_level = level; }
 LogLevel::Level Logger::getLevel() const { return m_level; }
 
 Logger::ptr LoggerManager::getLogger(const std::string& name) {
-  MutexLockGuard guard(m_mutex);
+  std::lock_guard<std::mutex> guard(m_mutex);
   auto it = m_loggers.find(name);
   if (it != m_loggers.end()) {
     return it->second;

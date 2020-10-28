@@ -27,11 +27,27 @@ After make, shared library will be in ${project}/lib and binary file in ${projec
 - coroutine
 - redis
 
+## Benchmark
+
+1. log module
+
+log_bench 300000
+```
+Async Benchmark
+Elapsed:{3.2528 secs} 92228/sec
+Sync Benchmark
+Elapsed:{2.42646 secs} 123636/sec
+```
+
 ## TODO
 
-[*] Travis-ci
-[ ] add test
-[ ] net library
+- [x] Travis-ci
+
+- [x] Async log
+
+- [ ] add test
+
+- [ ] net library
 
 ## LICENSE
 
