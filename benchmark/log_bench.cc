@@ -9,7 +9,6 @@
 
 #include "swallow/base/log.h"
 
-using namespace std::chrono;
 void bench(int howmany, std::shared_ptr<swallow::Logger> logger);
 
 int main(int argc, char *argv[]) {
@@ -17,7 +16,8 @@ int main(int argc, char *argv[]) {
   try {
     if (argc > 1) howmany = atoi(argv[1]);
     // Async
-    SWALLOW_LOG_INFO(SWALLOW_LOG_ROOT()) << "Async Benchmark";
+    std::cout << "=================Async Benchmark================="
+              << std::endl;
     auto async_log = SWALLOW_LOG_GET("async");
     auto async_file_appender =
         std::make_shared<swallow::AsyncFileLogAppender>("./async_bench.txt");
@@ -26,7 +26,8 @@ int main(int argc, char *argv[]) {
     bench(howmany, std::move(async_log));
 
     // Sync
-    swallow::info("Sync Benchmark");
+    std::cout << "=================Sync Benchmark=================="
+              << std::endl;
     auto sync_log = SWALLOW_LOG_GET("sync");
     auto sync_file_appender =
         std::make_shared<swallow::FileLogAppender>("./sync_bench.txt");
@@ -37,8 +38,8 @@ int main(int argc, char *argv[]) {
     SWALLOW_LOG_ERROR(SWALLOW_LOG_ROOT()) << e.what();
     return -1;
   }
-  //std::this_thread::sleep_for(std::chrono::seconds(2));
-  SWALLOW_LOG_INFO(SWALLOW_LOG_ROOT()) << "all cases finished";
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+  std::cout << "=================All FINISHED====================" << std::endl;
   return 0;
 }
 
@@ -50,7 +51,8 @@ void bench(int howmany, std::shared_ptr<swallow::Logger> logger) {
     SWALLOW_LOG_INFO(logger) << "This is logger appender!";
   }
   auto delta = high_resolution_clock::now() - start;
-  auto delta_d = duration_cast<duration<double>>(delta).count();
-  SWALLOW_LOG_INFO(SWALLOW_LOG_ROOT()) << "Elapsed:{" << delta_d << " secs} "
-                                       << int(howmany / delta_d) << "/sec";
+  auto delta_d =
+      std::chrono::duration_cast<std::chrono::duration<double>>(delta).count();
+  std::cout << "Elapsed:{" << delta_d << " secs} " << int(howmany / delta_d)
+            << "/sec" << std::endl;
 }

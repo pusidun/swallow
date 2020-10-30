@@ -9,6 +9,7 @@
 
 #include <sys/time.h>
 
+#include <atomic>
 #include <cstdio>
 #include <ctime>
 #include <functional>
@@ -368,30 +369,48 @@ void AsyncFileLogAppender::log(Logger::ptr logger, LogLevel::Level level,
                                LogEvent::ptr event) {
   if (level >= LogAppender::m_level) {
     std::string msg = LogAppender::m_formatter->format(logger, level, event);
-    {
-      std::lock_guard<std::mutex> guard(m_mutex);
-      m_msg_q.push_back(msg);
+    std::lock_guard<std::mutex> guard(m_mutex);
+    if (_currentBuff->size() < _buffsize) {
+      _currentBuff->push_back(msg);
+    } else {
+      _buffer.push_back(std::move(_currentBuff));
+      if (_nextBuff)
+        _currentBuff = std::move(_nextBuff);
+      else
+        _currentBuff.reset(new Buffer());
+      _currentBuff->push_back(msg);
       m_cond.notify_one();
     }
   }
 }
 
 void AsyncFileLogAppender::threadFunc() {
-  while(m_running) {
+  m_filestream.open(m_filename, std::ios::app);
+  if (!m_filestream)
+    std::cerr << "open async logfile " << m_filename << " failed" << std::endl;
+  while (m_running) {
+    std::vector<std::unique_ptr<std::list<std::string>>> write_buff;
+    BufferPtr buf1 = std::make_unique<Buffer>(),
+              buf2 = std::make_unique<Buffer>();
     std::list<std::string> lst;
     {
       std::unique_lock<std::mutex> locker(m_mutex);
-      lst.splice(lst.begin(), m_msg_q);
-      if(lst.empty())
-        m_cond.wait(locker);
+      if (_buffer.empty()) m_cond.wait_for(locker, std::chrono::seconds(3));
+      _buffer.push_back(std::move(_currentBuff));
+      write_buff.swap(_buffer);
+      _currentBuff = std::move(buf1);
+      if (!_nextBuff) _nextBuff = std::move(buf2);
     }
-    std::ofstream fs;
-    fs.open(m_filename, std::ios::app);
-    if(fs) {
-      for(auto& str: lst)
-        fs << str;
-    }
+
+    for (size_t i = 0; i < write_buff.size(); ++i)
+      for (auto& str : *write_buff[i]) m_filestream << str;
+
+    if (!buf1) buf1.reset(new Buffer());
+    if (!buf2) buf2.reset(new Buffer());
+    write_buff.clear();
+    m_filestream.flush();
   }
+  m_filestream.close();
 }
 /**
  * @brief Logger Impl

@@ -1,10 +1,12 @@
 # swallow
 
-[![Build Status](https://travis-ci.org/pusidun/swallow.svg?branch=master)](https://travis-ci.org/pusidun/swallow)
+[![Build Status](https://travis-ci.com/pusidun/swallow.svg?branch=master)](https://travis-ci.com/pusidun/swallow)
 
 ## Introduction
 
 A c++ library
+
+More details and API can be found in [wiki](https://github.com/pusidun/swallow/wiki)
 
 ## Dependencies
 
@@ -31,12 +33,16 @@ After make, shared library will be in ${project}/lib and binary file in ${projec
 
 1. log module
 
-log_bench 300000
+CPU:AMD Ryzen 5 PRO 2500U w/ Radeon Vega Mobile Gfx
+Mem:1G SCSI:25G
+
 ```
-Async Benchmark
-Elapsed:{3.2528 secs} 92228/sec
-Sync Benchmark
-Elapsed:{2.42646 secs} 123636/sec
+$benchmark/log_bench 300000
+=================Async Benchmark=================
+Elapsed:{2.27361 secs} 131948/sec
+=================Sync Benchmark==================
+Elapsed:{2.1495 secs} 139567/sec
+=================All FINISHED====================
 ```
 
 ## TODO

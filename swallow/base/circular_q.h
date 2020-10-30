@@ -20,7 +20,7 @@ class circular_q {
    * @brief ctor
    * @param size[in] vector<T> reverses one item as marker for full _q
    **/
-  explicit circular_q(size_t size) : max_size(size + 1), _q(max_size) {}
+  explicit circular_q(size_t size=100) : max_size(size + 1), _q(max_size) {}
 
   void push(T&& item) {
     _q[rear] = std::move(item);

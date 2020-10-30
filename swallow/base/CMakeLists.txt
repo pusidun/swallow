@@ -1,8 +1,8 @@
 # compiler shared library
 set(BASE_SRCS
+    log.cc
     config.cc
     coroutine.cc
-    log.cc
     process.cc
     redis.cc
     schedule.cc

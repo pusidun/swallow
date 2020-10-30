@@ -17,7 +17,8 @@ int64_t get_current_millis(void) {
 int main() {
   /* 通过LoggerMgr去创建、获取log对象 */
   auto logger = SWALLOW_LOG_GET("example_log");
-  auto fmt = std::make_shared<swallow::LogFormatter>("%f%T%l%T%d%T%p%T%r%T%c %m%n");
+  auto fmt =
+      std::make_shared<swallow::LogFormatter>("%f%T%l%T%d%T%p%T%r%T%c %m%n");
 
   /* add stdout appender */
   auto stdoutappender = std::make_shared<swallow::StdoutLogAppender>();
@@ -25,7 +26,8 @@ int main() {
   stdoutappender->setLevel(swallow::LogLevel::DEBUG);
   logger->addAppender(stdoutappender);
 
-  auto file_appender = std::make_shared<swallow::AsyncFileLogAppender>("./log.txt");
+  auto file_appender =
+      std::make_shared<swallow::AsyncFileLogAppender>("./log.txt");
   file_appender->setFormatter(fmt);
   file_appender->setLevel(swallow::LogLevel::DEBUG);
   logger->addAppender(file_appender);
@@ -36,11 +38,5 @@ int main() {
   SWALLOW_LOG_FATAL(logger) << "TEST stdout and file output logs";
   SWALLOW_LOG_ERROR(logger) << "TEST stdout and file output logs";
 
-  /* 默认日志api.默认日志只输出到标准输出 */
-  swallow::debug("default debug");
-  swallow::info("default info");
-  swallow::warn("default warn");
-  swallow::fatal("default info");
-  swallow::error("default info");
   return 0;
 }

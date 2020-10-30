@@ -10,6 +10,7 @@
 
 #include <time.h>
 
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <cstdarg>
@@ -26,7 +27,6 @@
 #include <vector>
 
 #include "swallow/base/singleton.h"
-#include "threadpool.h"
 
 /**
  * @brief log stream macros
@@ -228,25 +228,27 @@ class FileLogAppender : public LogAppender {
 
  protected:
   FileLogAppender() = default;
-
- private:
-  std::string m_filename;
-  std::ofstream m_filestream;
   // last open time
   uint64_t m_lastTime = 0;
+
+ private:
+  std::ofstream m_filestream;
+  std::string m_filename;
 };
 
 class AsyncFileLogAppender : public FileLogAppender {
  public:
   explicit AsyncFileLogAppender(const std::string& filename)
       : m_filename(filename),
+        m_running(true),
         m_thread(std::bind(&AsyncFileLogAppender::threadFunc, this)),
-        m_running(true) {}
+        _currentBuff(new Buffer()),
+        _nextBuff(new Buffer()) {}
 
   ~AsyncFileLogAppender() {
     if (m_running) stop();
   }
-
+  // async log front-end
   void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
            LogEvent::ptr event) override;
 
@@ -257,15 +259,22 @@ class AsyncFileLogAppender : public FileLogAppender {
   }
 
  private:
+  // async log back-end
   void threadFunc();
 
  private:
+  std::ofstream m_filestream;
   std::string m_filename;
-  std::thread m_thread;
-  std::mutex m_mutex;
-  std::condition_variable m_cond;
-  std::list<std::string> m_msg_q;
   std::atomic_bool m_running;
+  std::thread m_thread;
+  std::condition_variable m_cond;
+  typedef std::list<std::string> Buffer;
+  typedef std::unique_ptr<Buffer> BufferPtr;
+  typedef std::vector<BufferPtr> BufferVector;
+  static const size_t _buffsize = 25;
+  BufferPtr _currentBuff;
+  BufferPtr _nextBuff;
+  BufferVector _buffer;
 };
 
 class Logger : public std::enable_shared_from_this<Logger> {
@@ -329,31 +338,6 @@ class LoggerManager {
 };
 
 typedef Singleton<LoggerManager> LoggerMgr;
-
-/* default logger API */
-inline std::shared_ptr<Logger> default_logger() {
-  return LoggerMgr::getInstance()->getRoot();
-}
-
-inline void debug(const std::string& msg) {
-  SWALLOW_LOG_DEBUG(default_logger()) << msg;
-}
-
-inline void info(const std::string& msg) {
-  SWALLOW_LOG_INFO(default_logger()) << msg;
-}
-
-inline void warn(const std::string& msg) {
-  SWALLOW_LOG_WARN(default_logger()) << msg;
-}
-
-inline void error(const std::string& msg) {
-  SWALLOW_LOG_ERROR(default_logger()) << msg;
-}
-
-inline void fatal(const std::string& msg) {
-  SWALLOW_LOG_FATAL(default_logger()) << msg;
-}
 
 }  // namespace swallow
 
