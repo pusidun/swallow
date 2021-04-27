@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "hiredis/hiredis.h"

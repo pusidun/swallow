@@ -10,7 +10,8 @@ More details and API can be found in [wiki](https://github.com/pusidun/swallow/w
 
 ## Dependencies
 
-boost
+- boost
+- gtest
 
 ## Build
 

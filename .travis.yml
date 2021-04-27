@@ -32,4 +32,4 @@ script:
   - CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6
   - mkdir build && cd build && cmake .. && make
   - cd .. && ls && bash test.sh
-  - cpplint examples/* test/* benchmark/* swallow/base/log*
+#  - cpplint examples/* test/* benchmark/* swallow/base/log*

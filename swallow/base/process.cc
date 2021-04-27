@@ -61,7 +61,7 @@ static int start_daemon(int argc, char** argv,
         return cb(argc, argv);
       } else if (pid > 0) {
         // 守护进程
-        int* status;
+        int* status = nullptr;
 
         waitpid(pid, status, 0);
         if (!status) {
