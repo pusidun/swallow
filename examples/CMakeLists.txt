@@ -21,3 +21,7 @@ target_link_libraries(redis_example swallow hiredis)
 # Process
 add_executable(process_example process_example.cc)
 target_link_libraries(process_example swallow)
+
+# Exception
+add_executable(exception_example exception_example.cc)
+target_link_libraries(exception_example swallow)

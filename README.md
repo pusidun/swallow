@@ -6,6 +6,8 @@
 
 A c++ library
 
+Only compile under Linux, Windows will be supported in future if necessary.
+
 More details and API can be found in [wiki](https://github.com/pusidun/swallow/wiki)
 
 ## Dependencies
@@ -64,3 +66,11 @@ This code is released under MIT.
 
 Issue reports and code fixes are welcome.
 This repo obeys [Google C++ Style Guide](http://google.github.io/styleguide/cppguide.html).
+
+## Reference
+
+[chenshuo/muduo](https://github.com/chenshuo/muduo)
+
+[sylar-yin/sylar](https://github.com/sylar-yin/sylar)
+
+[pusidun's blog: muduo notes](https://pusidun.github.io/tags/#muduo-ref)

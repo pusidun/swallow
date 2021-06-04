@@ -45,6 +45,8 @@ class Thread {
   int64_t getId() const { return m_id; }
   const std::string& getName() const { return m_name; }
 
+  std::string GetBacktrace();
+
   void join();
   static Thread* GetThis();
   static const std::string& GetName();

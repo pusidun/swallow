@@ -10,6 +10,9 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <execinfo.h>
+#include <cstdlib>
+#include <cxxabi.h>
 
 #include "swallow/base/log.h"
 
@@ -57,6 +60,49 @@ Thread::Thread(std::function<void()> cb, const std::string& name)
 }
 
 Thread::~Thread() { pthread_detach(m_thread); }
+
+std::string Thread::GetBacktrace() {
+  std::string bktrace;
+  constexpr int max_frames = 200;
+  void* frame[max_frames];
+  int nptrs = backtrace(frame, max_frames);
+  char** readable_symbols = backtrace_symbols(frame, nptrs);
+  if(readable_symbols) {
+    size_t len = 256;
+    char* buff = static_cast<char*>(malloc(len));
+    for(int i=0; i<nptrs; ++i){
+      bktrace.append("\t");
+      // 使用__cxa_demangle对符号信息转换，使其更便于人阅读
+      // 参考https://pusidun.github.io/2021/05/muduo_base03/
+      char *left=nullptr,*right=nullptr;
+      for(char* p=readable_symbols[i];*p;++p){
+        if(*p == '(')
+          left = p;
+        if(*p == '+')
+          right = p;
+      }
+      if(left && right) {
+        *right = '\0';
+        int status = 0;
+        char* ret = abi::__cxa_demangle(left+1,buff,&len,&status);
+        *right = '+';
+        if(status == 0) {
+          buff = ret;
+          bktrace.append(readable_symbols[i], left+1);
+          bktrace.append(buff);
+          bktrace.push_back('\n');
+          continue;
+        }
+      }
+      // if demangle failed, then print raw string.
+      bktrace.append(readable_symbols[i]);
+      bktrace.push_back('\n');
+    }
+    free(buff);
+    free(readable_symbols);
+  }
+  return bktrace;
+}
 
 void Thread::join() {
   pthread_join(m_thread, nullptr);
