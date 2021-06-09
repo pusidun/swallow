@@ -25,3 +25,7 @@ target_link_libraries(process_example swallow)
 # Exception
 add_executable(exception_example exception_example.cc)
 target_link_libraries(exception_example swallow)
+
+# Ratelimiter
+add_executable(ratelimiter_example ratelimiter_example.cc)
+target_link_libraries(ratelimiter_example swallow)
